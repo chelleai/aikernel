@@ -12,7 +12,21 @@ from aikernel._internal.types.request import (
     LLMToolParameter,
     LLMUserMessage,
 )
-from aikernel._internal.types.response import LLMToolCall, ToolLLMResponse
+from aikernel._internal.types.provider import (
+    LiteLLMTextMessagePart,
+    LiteLLMMediaMessagePart,
+    LiteLLMMessage,
+    LiteLLMCacheControl,
+    LiteLLMToolFunction,
+    LiteLLMTool,
+)
+from aikernel._internal.types.response import (
+    LLMToolCall,
+    ToolLLMResponse,
+    StrictToolLLMResponse,
+    StructuredLLMResponse,
+    UnstructuredLLMResponse,
+)
 from aikernel._internal.unstructured import llm_unstructured, llm_unstructured_sync
 
 __all__ = [
@@ -23,15 +37,24 @@ __all__ = [
     "llm_unstructured_sync",
     "llm_unstructured",
     "AIError",
+    "LiteLLMCacheControl",
+    "LiteLLMMediaMessagePart",
+    "LiteLLMMessage",
+    "LiteLLMTextMessagePart",
+    "LiteLLMTool",
+    "LiteLLMToolFunction",
     "LLMModel",
     "LLMMessageContentType",
     "LLMMessagePart",
     "LLMMessageRole",
     "LLMUserMessage",
     "LLMToolCall",
-    "ToolLLMResponse",
     "LLMAssistantMessage",
     "LLMSystemMessage",
     "LLMTool",
     "LLMToolParameter",
+    "StrictToolLLMResponse",
+    "StructuredLLMResponse",
+    "ToolLLMResponse",
+    "UnstructuredLLMResponse",
 ]
