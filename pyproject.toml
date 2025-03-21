@@ -1,6 +1,6 @@
 [project]
 name = "aikernel"
-version = "0.1.5"
+version = "0.1.6"
 description = "A collection of types and interfaces for building type-safe AI tooling. Wraps around litellm."
 readme = "README.md"
 authors = [
@@ -10,7 +10,9 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "litellm>=1.56.5",
+    # https://github.com/stanfordnlp/dspy/issues/7986
+    "openai==1.61.0",
+    "litellm==1.63.2",
     "pydantic>=2.8.2",
 ]
 
