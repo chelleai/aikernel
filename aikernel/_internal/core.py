@@ -7,7 +7,7 @@ from aikernel._internal.types.request import (
 )
 
 
-def render_message(message: LLMUserMessage | LLMAssistantMessage | LLMSystemMessage) -> LiteLLMMessage:
+def render_message(message: LLMUserMessage | LLMAssistantMessage | LLMSystemMessage, /) -> LiteLLMMessage:
     role = (
         "system"
         if isinstance(message, LLMSystemMessage)
