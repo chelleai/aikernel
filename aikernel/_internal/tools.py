@@ -9,6 +9,7 @@ from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import LLMAssistantMessage, LLMModel, LLMSystemMessage, LLMTool, LLMUserMessage
 from aikernel._internal.types.response import (
     LLMToolCall,
+    LLMUsage,
     StrictToolLLMResponse,
     ToolLLMResponse,
     UnstructuredLLMResponse,
@@ -59,14 +60,16 @@ def llm_tool_call_sync(
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
 
+    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+
     tool_calls = response.choices[0].message.tool_calls or []
     if len(tool_calls) == 0:
         if tool_choice == "required":
             raise AIError("No tool call found in response")
         elif tool_choice == "auto":
-            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content)
+            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
         else:
-            return UnstructuredLLMResponse(text=response.choices[0].message.content)
+            return UnstructuredLLMResponse(text=response.choices[0].message.content, usage=usage)
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
@@ -79,7 +82,7 @@ def llm_tool_call_sync(
         raise AIError(f"Invalid tool call arguments: {tool_calls[0].function.arguments}")
 
     tool_call = LLMToolCall(tool_name=chosen_tool.name, arguments=arguments)
-    return StrictToolLLMResponse(tool_call=tool_call)
+    return StrictToolLLMResponse(tool_call=tool_call, usage=usage)
 
 
 @overload
@@ -128,14 +131,16 @@ async def llm_tool_call(
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
 
+    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+
     tool_calls = response.choices[0].message.tool_calls or []
     if len(tool_calls) == 0:
         if tool_choice == "required":
             raise AIError("No tool call found in response")
         elif tool_choice == "auto":
-            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content)
+            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
         else:
-            return UnstructuredLLMResponse(text=response.choices[0].message.content)
+            return UnstructuredLLMResponse(text=response.choices[0].message.content, usage=usage)
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
@@ -148,4 +153,4 @@ async def llm_tool_call(
         raise AIError(f"Invalid tool call arguments: {tool_calls[0].function.arguments}")
 
     tool_call = LLMToolCall(tool_name=chosen_tool.name, arguments=arguments)
-    return StrictToolLLMResponse(tool_call=tool_call)
+    return StrictToolLLMResponse(tool_call=tool_call, usage=usage)

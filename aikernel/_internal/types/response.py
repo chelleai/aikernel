@@ -10,13 +10,20 @@ class LLMToolCall(BaseModel):
     arguments: dict[str, Any]
 
 
+class LLMUsage(BaseModel):
+    input_tokens: int
+    output_tokens: int
+
+
 class UnstructuredLLMResponse(BaseModel):
     text: str
+    usage: LLMUsage
 
 
 class StructuredLLMResponse[T: BaseModel](BaseModel):
     text: str
     structure: type[T]
+    usage: LLMUsage
 
     @computed_field
     @property
@@ -27,6 +34,7 @@ class StructuredLLMResponse[T: BaseModel](BaseModel):
 class ToolLLMResponse(BaseModel):
     tool_call: LLMToolCall | None = None
     text: str | None = None
+    usage: LLMUsage
 
     @model_validator(mode="after")
     def at_least_one_field(self) -> Self:
@@ -38,3 +46,4 @@ class ToolLLMResponse(BaseModel):
 
 class StrictToolLLMResponse(BaseModel):
     tool_call: LLMToolCall
+    usage: LLMUsage
