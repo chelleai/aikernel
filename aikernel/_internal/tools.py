@@ -3,7 +3,6 @@ from typing import Any, Literal, overload
 
 from litellm import acompletion, completion
 
-from aikernel._internal.core import render_message
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import LLMAssistantMessage, LLMModel, LLMSystemMessage, LLMTool, LLMUserMessage
@@ -53,7 +52,7 @@ def llm_tool_call_sync(
 ) -> ToolLLMResponse | StrictToolLLMResponse | UnstructuredLLMResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(render_message(message))
+        rendered_messages.append(message.render())
 
     rendered_tools = [tool.render() for tool in tools]
 
@@ -122,7 +121,7 @@ async def llm_tool_call(
 ) -> ToolLLMResponse | StrictToolLLMResponse | UnstructuredLLMResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(render_message(message))
+        rendered_messages.append(message.render())
 
     rendered_tools = [tool.render() for tool in tools]
 

@@ -5,7 +5,12 @@ from typing import Self
 from pydantic import BaseModel, field_validator, model_validator
 
 from aikernel._internal.errors import AIError
-from aikernel._internal.types.provider import LiteLLMTool
+from aikernel._internal.types.provider import (
+    LiteLLMMediaMessagePart,
+    LiteLLMMessage,
+    LiteLLMTextMessagePart,
+    LiteLLMTool,
+)
 
 
 class LLMModel(StrEnum):
@@ -42,17 +47,36 @@ class _LLMMessage(BaseModel):
     parts: list[LLMMessagePart]
     created_at: datetime = datetime.now(UTC)
 
+    def render_parts(self) -> list[LiteLLMMediaMessagePart | LiteLLMTextMessagePart]:
+        parts: list[LiteLLMMediaMessagePart | LiteLLMTextMessagePart] = []
+        for part in self.parts:
+            if part.content_type == LLMMessageContentType.TEXT:
+                parts.append({"type": "text", "text": part.content})
+            else:
+                parts.append({"type": "image_url", "image_url": f"data:{part.content_type};base64,{part.content}"})
+
+        return parts
+
+    def render(self) -> LiteLLMMessage:
+        raise NotImplementedError("Subclasses must implement this method")
+
 
 class LLMSystemMessage(_LLMMessage):
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.SYSTEM
 
+    def render(self) -> LiteLLMMessage:
+        return {"role": "system", "content": self.render_parts()}
+
 
 class LLMUserMessage(_LLMMessage):
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.USER
+
+    def render(self) -> LiteLLMMessage:
+        return {"role": "user", "content": self.render_parts()}
 
 
 class LLMAssistantMessage(_LLMMessage):
@@ -72,6 +96,9 @@ class LLMAssistantMessage(_LLMMessage):
             raise AIError("Assistant messages can not have media parts")
 
         return self
+
+    def render(self) -> LiteLLMMessage:
+        return {"role": "assistant", "content": self.render_parts()}
 
 
 class LLMTool[ParametersT: BaseModel](BaseModel):

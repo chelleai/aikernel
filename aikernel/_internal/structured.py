@@ -1,7 +1,6 @@
 from litellm import acompletion, completion
 from pydantic import BaseModel
 
-from aikernel._internal.core import render_message
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import LLMAssistantMessage, LLMModel, LLMSystemMessage, LLMUserMessage
@@ -16,7 +15,7 @@ def llm_structured_sync[T: BaseModel](
 ) -> StructuredLLMResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(render_message(message))
+        rendered_messages.append(message.render())
 
     response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
 
@@ -40,7 +39,7 @@ async def llm_structured[T: BaseModel](
 ) -> StructuredLLMResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(render_message(message))
+        rendered_messages.append(message.render())
 
     response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
 
