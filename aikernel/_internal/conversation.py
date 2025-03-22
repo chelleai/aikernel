@@ -1,12 +1,9 @@
 import json
-from typing import NewType
 
 from pydantic import ValidationError
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.request import LLMAssistantMessage, LLMSystemMessage, LLMToolMessage, LLMUserMessage
-
-ConversationDump = NewType("ConversationDump", str)
 
 
 class Conversation:

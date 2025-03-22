@@ -1,3 +1,4 @@
+from aikernel._internal.conversation import Conversation
 from aikernel._internal.errors import AIError
 from aikernel._internal.structured import llm_structured, llm_structured_sync
 from aikernel._internal.tools import llm_tool_call, llm_tool_call_sync
@@ -36,6 +37,7 @@ __all__ = [
     "llm_unstructured_sync",
     "llm_unstructured",
     "AIError",
+    "Conversation",
     "LiteLLMCacheControl",
     "LiteLLMMediaMessagePart",
     "LiteLLMMessage",
