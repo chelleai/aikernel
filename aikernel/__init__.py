@@ -18,6 +18,7 @@ from aikernel._internal.types.request import (
     LLMModel,
     LLMSystemMessage,
     LLMTool,
+    LLMToolMessage,
     LLMUserMessage,
 )
 from aikernel._internal.types.response import (
@@ -49,9 +50,10 @@ __all__ = [
     "LLMMessagePart",
     "LLMMessageRole",
     "LLMUserMessage",
-    "LLMToolCall",
     "LLMAssistantMessage",
     "LLMSystemMessage",
+    "LLMToolMessage",
+    "LLMToolCall",
     "LLMTool",
     "StrictToolLLMResponse",
     "StructuredLLMResponse",
