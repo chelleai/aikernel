@@ -26,6 +26,7 @@ class LLMMessageRole(StrEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
+    TOOL = "tool"
 
 
 class LLMMessageContentType(StrEnum):
@@ -80,12 +81,6 @@ class LLMUserMessage(_LLMMessage):
 
 
 class LLMAssistantMessage(_LLMMessage):
-    @classmethod
-    def from_text(cls, text: str, /) -> Self:
-        return cls(
-            parts=[LLMMessagePart(content_type=LLMMessageContentType.TEXT, content=text)], created_at=datetime.now(UTC)
-        )
-
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.ASSISTANT
@@ -99,6 +94,32 @@ class LLMAssistantMessage(_LLMMessage):
 
     def render(self) -> LiteLLMMessage:
         return {"role": "assistant", "content": self.render_parts()}
+
+
+class LLMToolMessage(_LLMMessage):
+    tool_call_id: str
+    name: str
+    response: str
+    parts: list[LLMMessagePart] = []
+
+    @model_validator(mode="after")
+    def no_parts(self) -> Self:
+        if len(self.parts) > 0:
+            raise AIError("Tool messages can not have parts")
+
+        return self
+
+    @property
+    def role(self) -> LLMMessageRole:
+        return LLMMessageRole.TOOL
+
+    def render(self) -> LiteLLMMessage:
+        return {
+            "role": "tool",
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+            "content": self.response,
+        }
 
 
 class LLMTool[ParametersT: BaseModel](BaseModel):

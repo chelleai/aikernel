@@ -82,7 +82,7 @@ def llm_tool_call_sync(
     except json.JSONDecodeError:
         raise AIError(f"Invalid tool call arguments: {tool_calls[0].function.arguments}")
 
-    tool_call = LLMToolCall(tool_name=chosen_tool.name, arguments=arguments)
+    tool_call = LLMToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
     return StrictToolLLMResponse(tool_call=tool_call, usage=usage)
 
 
@@ -153,5 +153,5 @@ async def llm_tool_call(
     except json.JSONDecodeError:
         raise AIError(f"Invalid tool call arguments: {tool_calls[0].function.arguments}")
 
-    tool_call = LLMToolCall(tool_name=chosen_tool.name, arguments=arguments)
+    tool_call = LLMToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
     return StrictToolLLMResponse(tool_call=tool_call, usage=usage)

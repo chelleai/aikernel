@@ -11,7 +11,7 @@ _LiteLLMGeminiModel = Literal[
 _LiteLLMEmbeddingModel = Literal[
     "gemini/text-embedding-004",
 ]
-_MessageRole = Literal["system", "user", "assistant"]
+_MessageRole = Literal["system", "user", "assistant", "tool"]
 
 
 # request
@@ -25,13 +25,22 @@ class _LiteLLMMediaMessageContent(TypedDict):
     image_url: str
 
 
+class _LiteLLMToolMessageContent(TypedDict):
+    type: Literal["tool"]
+    tool_call_id: str
+    name: str
+    content: str
+
+
 class _LiteLLMCacheControl(TypedDict):
     type: Literal["ephemeral"]
 
 
 class _LiteLLMMessage(TypedDict):
     role: _MessageRole
-    content: list[_LiteLLMTextMessageContent | _LiteLLMMediaMessageContent]
+    tool_call_id: NotRequired[str]
+    name: NotRequired[str]
+    content: list[_LiteLLMTextMessageContent | _LiteLLMMediaMessageContent] | str
     cache_control: NotRequired[_LiteLLMCacheControl]
 
 
@@ -53,6 +62,7 @@ class _LiteLLMModelResponseChoiceToolCallFunction:
 
 
 class _LiteLLMModelResponseChoiceToolCall:
+    id: str
     function: _LiteLLMModelResponseChoiceToolCallFunction
 
 

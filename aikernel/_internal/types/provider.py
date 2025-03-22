@@ -16,8 +16,10 @@ class LiteLLMCacheControl(TypedDict):
 
 
 class LiteLLMMessage(TypedDict):
-    role: Literal["system", "user", "assistant"]
-    content: list[LiteLLMTextMessagePart | LiteLLMMediaMessagePart]
+    role: Literal["system", "user", "assistant", "tool"]
+    content: list[LiteLLMTextMessagePart | LiteLLMMediaMessagePart] | str
+    tool_call_id: NotRequired[str]
+    name: NotRequired[str]
     cache_control: NotRequired[LiteLLMCacheControl]
 
 
