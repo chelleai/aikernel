@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Self
 
 from pydantic import BaseModel, field_validator, model_validator
 
@@ -74,17 +74,10 @@ class LLMAssistantMessage(_LLMMessage):
         return self
 
 
-class LLMToolParameter(BaseModel):
+class LLMTool[ParametersT: BaseModel](BaseModel):
     name: str
     description: str
-    type: Literal["string", "number", "boolean", "array", "object"] = "string"
-    optional: bool = False
-
-
-class LLMTool(BaseModel):
-    name: str
-    description: str
-    parameters: type[BaseModel]
+    parameters: type[ParametersT]
 
     @field_validator("name", mode="after")
     @classmethod

@@ -1,5 +1,5 @@
 import json
-from typing import Literal, overload
+from typing import Any, Literal, overload
 
 from litellm import acompletion, completion
 
@@ -15,13 +15,15 @@ from aikernel._internal.types.response import (
     UnstructuredLLMResponse,
 )
 
+AnyLLMTool = LLMTool[Any]
+
 
 @overload
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
 ) -> ToolLLMResponse: ...
 @overload
@@ -29,7 +31,7 @@ def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
 ) -> StrictToolLLMResponse: ...
 @overload
@@ -37,7 +39,7 @@ def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["none"],
 ) -> UnstructuredLLMResponse: ...
 
@@ -46,7 +48,7 @@ def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "none", "required"],
 ) -> ToolLLMResponse | StrictToolLLMResponse | UnstructuredLLMResponse:
     rendered_messages: list[LiteLLMMessage] = []
@@ -90,7 +92,7 @@ async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
 ) -> ToolLLMResponse: ...
 @overload
@@ -98,7 +100,7 @@ async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
 ) -> StrictToolLLMResponse: ...
 @overload
@@ -106,7 +108,7 @@ async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["none"],
 ) -> UnstructuredLLMResponse: ...
 
@@ -115,7 +117,7 @@ async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
-    tools: list[LLMTool],
+    tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "none", "required"] = "auto",
 ) -> ToolLLMResponse | StrictToolLLMResponse | UnstructuredLLMResponse:
     rendered_messages: list[LiteLLMMessage] = []
