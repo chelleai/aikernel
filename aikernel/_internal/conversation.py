@@ -36,7 +36,9 @@ class Conversation:
 
     def render(self) -> list[LLMSystemMessage | LLMUserMessage | LLMAssistantMessage]:
         messages = [self._system_message] if self._system_message is not None else []
-        messages += sorted(self._user_messages + self._assistant_messages, key=lambda message: message.created_at)
+        messages += sorted(
+            self._user_messages + self._assistant_messages + self._tool_messages, key=lambda message: message.created_at
+        )
 
         return messages
 
