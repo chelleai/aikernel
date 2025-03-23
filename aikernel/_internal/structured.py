@@ -16,23 +16,12 @@ def llm_structured_sync[T: BaseModel](
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
     response_model: type[T],
-    tools: list[AnyLLMTool] | None = None,
 ) -> StructuredLLMResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         rendered_messages.append(message.render())
 
-    if tools is not None:
-        rendered_tools = [tool.render() for tool in tools]
-        response = completion(
-            messages=rendered_messages,
-            model=model.value,
-            response_format=response_model,
-            tools=rendered_tools,
-            tool_choice="none",
-        )
-    else:
-        response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
+    response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
 
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
@@ -48,23 +37,12 @@ async def llm_structured[T: BaseModel](
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
     model: LLMModel,
     response_model: type[T],
-    tools: list[AnyLLMTool] | None = None,
 ) -> StructuredLLMResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         rendered_messages.append(message.render())
 
-    if tools is not None:
-        rendered_tools = [tool.render() for tool in tools]
-        response = await acompletion(
-            messages=rendered_messages,
-            model=model.value,
-            response_format=response_model,
-            tools=rendered_tools,
-            tool_choice="none",
-        )
-    else:
-        response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
+    response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
 
     if len(response.choices) == 0:
         raise AIError("No response from LLM")

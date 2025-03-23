@@ -1,9 +1,18 @@
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Self
 
 from pydantic import ValidationError
 
 from aikernel._internal.errors import AIError
-from aikernel._internal.types.request import LLMAssistantMessage, LLMSystemMessage, LLMToolMessage, LLMUserMessage
+from aikernel._internal.types.request import (
+    LLMAssistantMessage,
+    LLMMessagePart,
+    LLMSystemMessage,
+    LLMToolMessage,
+    LLMUserMessage,
+)
 
 
 class Conversation:
@@ -30,6 +39,15 @@ class Conversation:
         messages += sorted(self._user_messages + self._assistant_messages, key=lambda message: message.created_at)
 
         return messages
+
+    @contextmanager
+    def with_temporary_system_message(self, *, message_part: LLMMessagePart) -> Iterator[Self]:
+        if self._system_message is None:
+            raise AIError("No system message to modify")
+
+        self._system_message.parts.append(message_part)
+        yield self
+        self._system_message.parts.pop()
 
     def dump(self) -> str:
         conversation_dump = {
