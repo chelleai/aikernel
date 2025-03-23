@@ -13,7 +13,7 @@ from aikernel._internal.types.request import (
     LLMToolMessage,
     LLMUserMessage,
 )
-from aikernel._internal.types.response import LLMUsage, StructuredLLMResponse
+from aikernel._internal.types.response import LLMResponseUsage, LLMStructuredResponse
 
 AnyLLMTool = LLMTool[Any]
 
@@ -23,7 +23,7 @@ def llm_structured_sync[T: BaseModel](
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     response_model: type[T],
-) -> StructuredLLMResponse[T]:
+) -> LLMStructuredResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -39,9 +39,9 @@ def llm_structured_sync[T: BaseModel](
         raise AIError("No response from LLM")
 
     text = response.choices[0].message.content
-    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+    usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
-    return StructuredLLMResponse(text=text, structure=response_model, usage=usage)
+    return LLMStructuredResponse(text=text, structure=response_model, usage=usage)
 
 
 async def llm_structured[T: BaseModel](
@@ -49,7 +49,7 @@ async def llm_structured[T: BaseModel](
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     response_model: type[T],
-) -> StructuredLLMResponse[T]:
+) -> LLMStructuredResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -65,6 +65,6 @@ async def llm_structured[T: BaseModel](
         raise AIError("No response from LLM")
 
     text = response.choices[0].message.content
-    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+    usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
-    return StructuredLLMResponse(text=text, structure=response_model, usage=usage)
+    return LLMStructuredResponse(text=text, structure=response_model, usage=usage)
