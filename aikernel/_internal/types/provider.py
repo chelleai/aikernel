@@ -15,11 +15,23 @@ class LiteLLMCacheControl(TypedDict):
     type: Literal["ephemeral"]
 
 
+class LiteLLMFunctionCall(TypedDict):
+    name: str
+    arguments: str
+
+
+class LiteLLMToolCall(TypedDict):
+    id: str
+    type: Literal["function"]
+    function: LiteLLMFunctionCall
+
+
 class LiteLLMMessage(TypedDict):
     role: Literal["system", "user", "assistant", "tool"]
-    content: list[LiteLLMTextMessagePart | LiteLLMMediaMessagePart] | str
     tool_call_id: NotRequired[str]
     name: NotRequired[str]
+    content: list[LiteLLMTextMessagePart | LiteLLMMediaMessagePart] | str | None
+    tool_calls: NotRequired[list[LiteLLMToolCall]]
     cache_control: NotRequired[LiteLLMCacheControl]
 
 

@@ -34,7 +34,7 @@ class Conversation:
     def set_system_message(self, *, message: LLMSystemMessage) -> None:
         self._system_message = message
 
-    def render(self) -> list[LLMSystemMessage | LLMUserMessage | LLMAssistantMessage]:
+    def render(self) -> list[LLMSystemMessage | LLMUserMessage | LLMAssistantMessage | LLMToolMessage]:
         messages = [self._system_message] if self._system_message is not None else []
         messages += sorted(
             self._user_messages + self._assistant_messages + self._tool_messages, key=lambda message: message.created_at

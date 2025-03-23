@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Self
+from typing import NoReturn, Self
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -42,6 +42,11 @@ class LLMMessageContentType(StrEnum):
 class LLMMessagePart(BaseModel):
     content: str
     content_type: LLMMessageContentType = LLMMessageContentType.TEXT
+
+
+class LLMToolFunctionCall(BaseModel):
+    name: str
+    arguments: str
 
 
 class _LLMMessage(BaseModel):
@@ -100,7 +105,9 @@ class LLMToolMessage(_LLMMessage):
     tool_call_id: str
     name: str
     response: str
-    parts: list[LLMMessagePart] = []
+    function_call: LLMToolFunctionCall
+
+    parts: list[LLMMessagePart] = []  # disabling from the base class
 
     @model_validator(mode="after")
     def no_parts(self) -> Self:
@@ -113,13 +120,34 @@ class LLMToolMessage(_LLMMessage):
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.TOOL
 
-    def render(self) -> LiteLLMMessage:
-        return {
+    def render(self) -> NoReturn:
+        raise AIError("Tool messages can not be rendered directly, please use render_call_and_response instead")
+
+    def render_call_and_response(self) -> tuple[LiteLLMMessage, LiteLLMMessage]:
+        invocation_message: LiteLLMMessage = {
+            "role": "assistant",
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+            "content": None,
+            "tool_calls": [
+                {
+                    "id": self.tool_call_id,
+                    "type": "function",
+                    "function": {
+                        "name": self.name,
+                        "arguments": self.function_call.arguments,
+                    },
+                }
+            ],
+        }
+        response_message: LiteLLMMessage = {
             "role": "tool",
             "tool_call_id": self.tool_call_id,
             "name": self.name,
             "content": self.response,
         }
+
+        return invocation_message, response_message
 
 
 class LLMTool[ParametersT: BaseModel](BaseModel):

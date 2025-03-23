@@ -5,7 +5,14 @@ from pydantic import BaseModel
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import LiteLLMMessage
-from aikernel._internal.types.request import LLMAssistantMessage, LLMModel, LLMSystemMessage, LLMTool, LLMUserMessage
+from aikernel._internal.types.request import (
+    LLMAssistantMessage,
+    LLMModel,
+    LLMSystemMessage,
+    LLMTool,
+    LLMToolMessage,
+    LLMUserMessage,
+)
 from aikernel._internal.types.response import LLMUsage, StructuredLLMResponse
 
 AnyLLMTool = LLMTool[Any]
@@ -13,13 +20,18 @@ AnyLLMTool = LLMTool[Any]
 
 def llm_structured_sync[T: BaseModel](
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     response_model: type[T],
 ) -> StructuredLLMResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(message.render())
+        if isinstance(message, LLMToolMessage):
+            invocation_message, response_message = message.render_call_and_response()
+            rendered_messages.append(invocation_message)
+            rendered_messages.append(response_message)
+        else:
+            rendered_messages.append(message.render())
 
     response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
 
@@ -34,13 +46,18 @@ def llm_structured_sync[T: BaseModel](
 
 async def llm_structured[T: BaseModel](
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     response_model: type[T],
 ) -> StructuredLLMResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(message.render())
+        if isinstance(message, LLMToolMessage):
+            invocation_message, response_message = message.render_call_and_response()
+            rendered_messages.append(invocation_message)
+            rendered_messages.append(response_message)
+        else:
+            rendered_messages.append(message.render())
 
     response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
 

@@ -36,11 +36,23 @@ class _LiteLLMCacheControl(TypedDict):
     type: Literal["ephemeral"]
 
 
+class _LiteLLMFunctionCall(TypedDict):
+    name: str
+    arguments: str
+
+
+class _LiteLLMToolCall(TypedDict):
+    id: str
+    type: Literal["function"]
+    function: _LiteLLMFunctionCall
+
+
 class _LiteLLMMessage(TypedDict):
     role: _MessageRole
     tool_call_id: NotRequired[str]
     name: NotRequired[str]
-    content: list[_LiteLLMTextMessageContent | _LiteLLMMediaMessageContent] | str
+    content: list[_LiteLLMTextMessageContent | _LiteLLMMediaMessageContent] | str | None
+    tool_calls: NotRequired[list[_LiteLLMToolCall]]
     cache_control: NotRequired[_LiteLLMCacheControl]
 
 
@@ -64,6 +76,7 @@ class _LiteLLMModelResponseChoiceToolCallFunction:
 class _LiteLLMModelResponseChoiceToolCall:
     id: str
     function: _LiteLLMModelResponseChoiceToolCallFunction
+    type: Literal["function"]
 
 
 class _LiteLLMModelResponseChoiceMessage:

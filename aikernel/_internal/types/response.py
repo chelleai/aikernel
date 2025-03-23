@@ -1,10 +1,17 @@
+import json
 from datetime import UTC, datetime
 from typing import Any, Self
 
 from pydantic import BaseModel, computed_field, model_validator
 
 from aikernel._internal.errors import AIError
-from aikernel._internal.types.request import LLMAssistantMessage, LLMMessageContentType, LLMMessagePart, LLMToolMessage
+from aikernel._internal.types.request import (
+    LLMAssistantMessage,
+    LLMMessageContentType,
+    LLMMessagePart,
+    LLMToolFunctionCall,
+    LLMToolMessage,
+)
 
 
 class LLMToolCall(BaseModel):
@@ -59,7 +66,7 @@ class ToolLLMResponse(BaseModel):
         return self
 
     def as_message(
-        self, *, created_at: datetime = datetime.now(UTC), return_value: str | None = None
+        self, *, created_at: datetime | None = None, return_value: str | None = None
     ) -> LLMAssistantMessage | LLMToolMessage:
         if self.tool_call is not None:
             if return_value is None:
@@ -69,7 +76,11 @@ class ToolLLMResponse(BaseModel):
                 tool_call_id=self.tool_call.id,
                 name=self.tool_call.tool_name,
                 response=return_value,
-                created_at=created_at,
+                function_call=LLMToolFunctionCall(
+                    name=self.tool_call.tool_name,
+                    arguments=json.dumps(self.tool_call.arguments),
+                ),
+                created_at=created_at or datetime.now(UTC),
             )
         else:
             if self.text is None:
@@ -77,7 +88,7 @@ class ToolLLMResponse(BaseModel):
 
             return LLMAssistantMessage(
                 parts=[LLMMessagePart(content_type=LLMMessageContentType.TEXT, content=self.text)],
-                created_at=created_at,
+                created_at=created_at or datetime.now(UTC),
             )
 
 
