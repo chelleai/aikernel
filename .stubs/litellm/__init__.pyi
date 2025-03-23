@@ -124,7 +124,7 @@ def completion(
     messages: list[_LiteLLMMessage],
     response_format: Any = None,
     tools: list[_LiteLLMTool] | None = None,
-    tool_choice: Literal["auto", "none", "required"] | None = None,
+    tool_choice: Literal["auto", "required"] | None = None,
     max_tokens: int | None = None,
     temperature: float = 1.0,
 ) -> ModelResponse: ...
@@ -136,7 +136,7 @@ async def acompletion(
     messages: list[_LiteLLMMessage],
     response_format: Any = None,
     tools: list[_LiteLLMTool] | None = None,
-    tool_choice: Literal["auto", "none", "required"] | None = None,
+    tool_choice: Literal["auto", "required"] | None = None,
     max_tokens: int | None = None,
     temperature: float = 1.0,
 ) -> ModelResponse: ...

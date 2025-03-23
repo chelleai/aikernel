@@ -5,13 +5,19 @@ from litellm import acompletion, completion
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import LiteLLMMessage
-from aikernel._internal.types.request import LLMAssistantMessage, LLMModel, LLMSystemMessage, LLMTool, LLMUserMessage
+from aikernel._internal.types.request import (
+    LLMAssistantMessage,
+    LLMModel,
+    LLMSystemMessage,
+    LLMTool,
+    LLMToolMessage,
+    LLMUserMessage,
+)
 from aikernel._internal.types.response import (
     LLMToolCall,
     LLMUsage,
     StrictToolLLMResponse,
     ToolLLMResponse,
-    UnstructuredLLMResponse,
 )
 
 AnyLLMTool = LLMTool[Any]
@@ -20,7 +26,7 @@ AnyLLMTool = LLMTool[Any]
 @overload
 def llm_tool_call_sync(
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
@@ -28,31 +34,28 @@ def llm_tool_call_sync(
 @overload
 def llm_tool_call_sync(
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
 ) -> StrictToolLLMResponse: ...
-@overload
-def llm_tool_call_sync(
-    *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
-    model: LLMModel,
-    tools: list[AnyLLMTool],
-    tool_choice: Literal["none"],
-) -> UnstructuredLLMResponse: ...
 
 
 def llm_tool_call_sync(
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     tools: list[AnyLLMTool],
-    tool_choice: Literal["auto", "none", "required"],
-) -> ToolLLMResponse | StrictToolLLMResponse | UnstructuredLLMResponse:
+    tool_choice: Literal["auto", "required"],
+) -> ToolLLMResponse | StrictToolLLMResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(message.render())
+        if isinstance(message, LLMToolMessage):
+            invocation_message, response_message = message.render_call_and_response()
+            rendered_messages.append(invocation_message)
+            rendered_messages.append(response_message)
+        else:
+            rendered_messages.append(message.render())
 
     rendered_tools = [tool.render() for tool in tools]
 
@@ -67,10 +70,8 @@ def llm_tool_call_sync(
     if len(tool_calls) == 0:
         if tool_choice == "required":
             raise AIError("No tool call found in response")
-        elif tool_choice == "auto":
-            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
         else:
-            return UnstructuredLLMResponse(text=response.choices[0].message.content, usage=usage)
+            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
@@ -89,7 +90,7 @@ def llm_tool_call_sync(
 @overload
 async def llm_tool_call(
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
@@ -97,31 +98,28 @@ async def llm_tool_call(
 @overload
 async def llm_tool_call(
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
 ) -> StrictToolLLMResponse: ...
-@overload
-async def llm_tool_call(
-    *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
-    model: LLMModel,
-    tools: list[AnyLLMTool],
-    tool_choice: Literal["none"],
-) -> UnstructuredLLMResponse: ...
 
 
 async def llm_tool_call(
     *,
-    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage],
+    messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     model: LLMModel,
     tools: list[AnyLLMTool],
-    tool_choice: Literal["auto", "none", "required"] = "auto",
-) -> ToolLLMResponse | StrictToolLLMResponse | UnstructuredLLMResponse:
+    tool_choice: Literal["auto", "required"] = "auto",
+) -> ToolLLMResponse | StrictToolLLMResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
-        rendered_messages.append(message.render())
+        if isinstance(message, LLMToolMessage):
+            invocation_message, response_message = message.render_call_and_response()
+            rendered_messages.append(invocation_message)
+            rendered_messages.append(response_message)
+        else:
+            rendered_messages.append(message.render())
 
     rendered_tools = [tool.render() for tool in tools]
 
@@ -138,10 +136,8 @@ async def llm_tool_call(
     if len(tool_calls) == 0:
         if tool_choice == "required":
             raise AIError("No tool call found in response")
-        elif tool_choice == "auto":
-            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
         else:
-            return UnstructuredLLMResponse(text=response.choices[0].message.content, usage=usage)
+            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
