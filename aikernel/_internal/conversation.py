@@ -1,7 +1,6 @@
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Self
 
 from pydantic import ValidationError
 
@@ -43,13 +42,27 @@ class Conversation:
         return messages
 
     @contextmanager
-    def with_temporary_system_message(self, *, message_part: LLMMessagePart) -> Iterator[Self]:
+    def with_temporary_system_message(self, *, message_part: LLMMessagePart) -> Iterator[None]:
         if self._system_message is None:
             raise AIError("No system message to modify")
 
         self._system_message.parts.append(message_part)
-        yield self
+        yield
         self._system_message.parts.pop()
+
+    @contextmanager
+    def session(self) -> Iterator[None]:
+        num_user_messages = len(self._user_messages)
+        num_assistant_messages = len(self._assistant_messages)
+        num_tool_messages = len(self._tool_messages)
+
+        try:
+            yield
+        except Exception:
+            self._user_messages = self._user_messages[:num_user_messages]
+            self._assistant_messages = self._assistant_messages[:num_assistant_messages]
+            self._tool_messages = self._tool_messages[:num_tool_messages]
+            raise
 
     def dump(self) -> str:
         conversation_dump = {
