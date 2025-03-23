@@ -44,11 +44,6 @@ class LLMMessagePart(BaseModel):
     content_type: LLMMessageContentType = LLMMessageContentType.TEXT
 
 
-class LLMToolFunctionCall(BaseModel):
-    name: str
-    arguments: str
-
-
 class _LLMMessage(BaseModel):
     parts: list[LLMMessagePart]
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -101,11 +96,16 @@ class LLMAssistantMessage(_LLMMessage):
         return {"role": "assistant", "content": self.render_parts()}
 
 
+class LLMToolMessageFunctionCall(BaseModel):
+    name: str
+    arguments: str
+
+
 class LLMToolMessage(_LLMMessage):
     tool_call_id: str
     name: str
     response: str
-    function_call: LLMToolFunctionCall
+    function_call: LLMToolMessageFunctionCall
 
     parts: list[LLMMessagePart] = []  # disabling from the base class
 

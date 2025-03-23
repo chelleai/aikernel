@@ -14,10 +14,10 @@ from aikernel._internal.types.request import (
     LLMUserMessage,
 )
 from aikernel._internal.types.response import (
-    LLMToolCall,
-    LLMUsage,
-    StrictToolLLMResponse,
-    ToolLLMResponse,
+    LLMAutoToolResponse,
+    LLMRequiredToolResponse,
+    LLMResponseToolCall,
+    LLMResponseUsage,
 )
 
 AnyLLMTool = LLMTool[Any]
@@ -30,7 +30,7 @@ def llm_tool_call_sync(
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
-) -> ToolLLMResponse: ...
+) -> LLMAutoToolResponse: ...
 @overload
 def llm_tool_call_sync(
     *,
@@ -38,7 +38,7 @@ def llm_tool_call_sync(
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
-) -> StrictToolLLMResponse: ...
+) -> LLMRequiredToolResponse: ...
 
 
 def llm_tool_call_sync(
@@ -47,7 +47,7 @@ def llm_tool_call_sync(
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "required"],
-) -> ToolLLMResponse | StrictToolLLMResponse:
+) -> LLMAutoToolResponse | LLMRequiredToolResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -64,14 +64,14 @@ def llm_tool_call_sync(
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
 
-    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+    usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
     tool_calls = response.choices[0].message.tool_calls or []
     if len(tool_calls) == 0:
         if tool_choice == "required":
             raise AIError("No tool call found in response")
         else:
-            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
+            return LLMAutoToolResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
@@ -83,8 +83,8 @@ def llm_tool_call_sync(
     except json.JSONDecodeError:
         raise AIError(f"Invalid tool call arguments: {tool_calls[0].function.arguments}")
 
-    tool_call = LLMToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
-    return StrictToolLLMResponse(tool_call=tool_call, usage=usage)
+    tool_call = LLMResponseToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
+    return LLMAutoToolResponse(tool_call=tool_call, usage=usage)
 
 
 @overload
@@ -94,7 +94,7 @@ async def llm_tool_call(
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
-) -> ToolLLMResponse: ...
+) -> LLMAutoToolResponse: ...
 @overload
 async def llm_tool_call(
     *,
@@ -102,7 +102,7 @@ async def llm_tool_call(
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
-) -> StrictToolLLMResponse: ...
+) -> LLMRequiredToolResponse: ...
 
 
 async def llm_tool_call(
@@ -111,7 +111,7 @@ async def llm_tool_call(
     model: LLMModel,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "required"] = "auto",
-) -> ToolLLMResponse | StrictToolLLMResponse:
+) -> LLMAutoToolResponse | LLMRequiredToolResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -130,14 +130,14 @@ async def llm_tool_call(
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
 
-    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+    usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
     tool_calls = response.choices[0].message.tool_calls or []
     if len(tool_calls) == 0:
         if tool_choice == "required":
             raise AIError("No tool call found in response")
         else:
-            return ToolLLMResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
+            return LLMAutoToolResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
@@ -149,5 +149,5 @@ async def llm_tool_call(
     except json.JSONDecodeError:
         raise AIError(f"Invalid tool call arguments: {tool_calls[0].function.arguments}")
 
-    tool_call = LLMToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
-    return StrictToolLLMResponse(tool_call=tool_call, usage=usage)
+    tool_call = LLMResponseToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
+    return LLMRequiredToolResponse(tool_call=tool_call, usage=usage)

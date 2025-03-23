@@ -9,25 +9,25 @@ from aikernel._internal.types.request import (
     LLMAssistantMessage,
     LLMMessageContentType,
     LLMMessagePart,
-    LLMToolFunctionCall,
     LLMToolMessage,
+    LLMToolMessageFunctionCall,
 )
 
 
-class LLMToolCall(BaseModel):
+class LLMResponseToolCall(BaseModel):
     id: str
     tool_name: str
     arguments: dict[str, Any]
 
 
-class LLMUsage(BaseModel):
+class LLMResponseUsage(BaseModel):
     input_tokens: int
     output_tokens: int
 
 
-class UnstructuredLLMResponse(BaseModel):
+class LLMUnstructuredResponse(BaseModel):
     text: str
-    usage: LLMUsage
+    usage: LLMResponseUsage
 
     def as_message(self, *, created_at: datetime = datetime.now(UTC)) -> LLMAssistantMessage:
         return LLMAssistantMessage(
@@ -36,10 +36,10 @@ class UnstructuredLLMResponse(BaseModel):
         )
 
 
-class StructuredLLMResponse[T: BaseModel](BaseModel):
+class LLMStructuredResponse[T: BaseModel](BaseModel):
     text: str
     structure: type[T]
-    usage: LLMUsage
+    usage: LLMResponseUsage
 
     @computed_field
     @property
@@ -53,10 +53,10 @@ class StructuredLLMResponse[T: BaseModel](BaseModel):
         )
 
 
-class ToolLLMResponse(BaseModel):
-    tool_call: LLMToolCall | None = None
+class LLMAutoToolResponse(BaseModel):
+    tool_call: LLMResponseToolCall | None = None
     text: str | None = None
-    usage: LLMUsage
+    usage: LLMResponseUsage
 
     @model_validator(mode="after")
     def at_least_one_field(self) -> Self:
@@ -76,7 +76,7 @@ class ToolLLMResponse(BaseModel):
                 tool_call_id=self.tool_call.id,
                 name=self.tool_call.tool_name,
                 response=return_value,
-                function_call=LLMToolFunctionCall(
+                function_call=LLMToolMessageFunctionCall(
                     name=self.tool_call.tool_name,
                     arguments=json.dumps(self.tool_call.arguments),
                 ),
@@ -92,6 +92,6 @@ class ToolLLMResponse(BaseModel):
             )
 
 
-class StrictToolLLMResponse(BaseModel):
-    tool_call: LLMToolCall
-    usage: LLMUsage
+class LLMRequiredToolResponse(BaseModel):
+    tool_call: LLMResponseToolCall
+    usage: LLMResponseUsage

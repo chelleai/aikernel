@@ -9,12 +9,12 @@ from aikernel._internal.types.request import (
     LLMToolMessage,
     LLMUserMessage,
 )
-from aikernel._internal.types.response import LLMUsage, UnstructuredLLMResponse
+from aikernel._internal.types.response import LLMResponseUsage, LLMUnstructuredResponse
 
 
 def llm_unstructured_sync(
     *, messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage], model: LLMModel
-) -> UnstructuredLLMResponse:
+) -> LLMUnstructuredResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -30,14 +30,14 @@ def llm_unstructured_sync(
         raise AIError("No response from LLM")
 
     text = response.choices[0].message.content
-    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+    usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
-    return UnstructuredLLMResponse(text=text, usage=usage)
+    return LLMUnstructuredResponse(text=text, usage=usage)
 
 
 async def llm_unstructured(
     *, messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage], model: LLMModel
-) -> UnstructuredLLMResponse:
+) -> LLMUnstructuredResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -53,6 +53,6 @@ async def llm_unstructured(
         raise AIError("No response from LLM")
 
     text = response.choices[0].message.content
-    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+    usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
-    return UnstructuredLLMResponse(text=text, usage=usage)
+    return LLMUnstructuredResponse(text=text, usage=usage)

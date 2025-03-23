@@ -22,11 +22,12 @@ from aikernel._internal.types.request import (
     LLMUserMessage,
 )
 from aikernel._internal.types.response import (
-    LLMToolCall,
-    StrictToolLLMResponse,
-    StructuredLLMResponse,
-    ToolLLMResponse,
-    UnstructuredLLMResponse,
+    LLMAutoToolResponse,
+    LLMRequiredToolResponse,
+    LLMResponseToolCall,
+    LLMResponseUsage,
+    LLMStructuredResponse,
+    LLMUnstructuredResponse,
 )
 from aikernel._internal.unstructured import llm_unstructured, llm_unstructured_sync
 
@@ -53,10 +54,11 @@ __all__ = [
     "LLMAssistantMessage",
     "LLMSystemMessage",
     "LLMToolMessage",
-    "LLMToolCall",
     "LLMTool",
-    "StrictToolLLMResponse",
-    "StructuredLLMResponse",
-    "ToolLLMResponse",
-    "UnstructuredLLMResponse",
+    "LLMStructuredResponse",
+    "LLMUnstructuredResponse",
+    "LLMAutoToolResponse",
+    "LLMRequiredToolResponse",
+    "LLMResponseToolCall",
+    "LLMResponseUsage",
 ]
