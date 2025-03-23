@@ -18,10 +18,10 @@ def llm_unstructured_sync(
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
 
-    return UnstructuredLLMResponse(
-        text=response.choices[0].message.content,
-        usage=LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens),
-    )
+    text = response.choices[0].message.content
+    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+
+    return UnstructuredLLMResponse(text=text, usage=usage)
 
 
 async def llm_unstructured(
@@ -36,7 +36,7 @@ async def llm_unstructured(
     if len(response.choices) == 0:
         raise AIError("No response from LLM")
 
-    return UnstructuredLLMResponse(
-        text=response.choices[0].message.content,
-        usage=LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens),
-    )
+    text = response.choices[0].message.content
+    usage = LLMUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
+
+    return UnstructuredLLMResponse(text=text, usage=usage)
