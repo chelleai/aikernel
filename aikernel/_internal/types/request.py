@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Self
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import (
@@ -46,7 +46,7 @@ class LLMMessagePart(BaseModel):
 
 class _LLMMessage(BaseModel):
     parts: list[LLMMessagePart]
-    created_at: datetime = datetime.now(UTC)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def render_parts(self) -> list[LiteLLMMediaMessagePart | LiteLLMTextMessagePart]:
         parts: list[LiteLLMMediaMessagePart | LiteLLMTextMessagePart] = []
