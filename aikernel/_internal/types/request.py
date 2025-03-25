@@ -5,7 +5,6 @@ from typing import Any, Literal, NoReturn, Self
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
-from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import (
     LiteLLMMediaMessagePart,
     LiteLLMMessage,
@@ -92,7 +91,7 @@ class LLMAssistantMessage(_LLMMessage):
     @model_validator(mode="after")
     def no_media_parts(self) -> Self:
         if any(part.content_type != LLMMessageContentType.TEXT for part in self.parts):
-            raise AIError("Assistant messages can not have media parts")
+            raise ValueError("Assistant messages can not have media parts")
 
         return self
 
@@ -116,7 +115,7 @@ class LLMToolMessage(_LLMMessage):
     @model_validator(mode="after")
     def no_parts(self) -> Self:
         if len(self.parts) > 0:
-            raise AIError("Tool messages can not have parts")
+            raise ValueError("Tool messages can not have parts")
 
         return self
 
@@ -126,7 +125,7 @@ class LLMToolMessage(_LLMMessage):
         return LLMMessageRole.TOOL
 
     def render(self) -> NoReturn:
-        raise AIError("Tool messages can not be rendered directly, please use render_call_and_response instead")
+        raise TypeError("Tool messages can not be rendered directly, please use render_call_and_response instead")
 
     def render_call_and_response(self) -> tuple[LiteLLMMessage, LiteLLMMessage]:
         invocation_message: LiteLLMMessage = {

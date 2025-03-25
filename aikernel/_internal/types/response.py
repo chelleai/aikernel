@@ -2,8 +2,6 @@ from typing import Any, Self
 
 from pydantic import BaseModel, computed_field, model_validator
 
-from aikernel._internal.errors import AIError
-
 
 class LLMResponseToolCall(BaseModel):
     id: str
@@ -40,7 +38,7 @@ class LLMAutoToolResponse(BaseModel):
     @model_validator(mode="after")
     def at_least_one_field(self) -> Self:
         if self.tool_call is None and self.text is None:
-            raise AIError("At least one of tool_call or text must be provided")
+            raise ValueError("At least one of tool_call or text must be provided")
 
         return self
 

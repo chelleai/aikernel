@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from pydantic import ValidationError
 
-from aikernel._internal.errors import AIError
+from aikernel._internal.errors import InvalidConversationDumpError
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
     LLMMessagePart,
@@ -44,7 +44,7 @@ class Conversation:
     @contextmanager
     def with_temporary_system_message(self, *, message_part: LLMMessagePart) -> Iterator[None]:
         if self._system_message is None:
-            raise AIError("No system message to modify")
+            raise ValueError("No system message to modify")
 
         self._system_message.parts.append(message_part)
         yield
@@ -79,7 +79,7 @@ class Conversation:
         try:
             conversation_dump = json.loads(dump)
         except json.JSONDecodeError as error:
-            raise AIError("Invalid conversation dump") from error
+            raise InvalidConversationDumpError() from error
 
         conversation = cls()
 
@@ -96,6 +96,6 @@ class Conversation:
             for tool_message in conversation_dump["tool"]:
                 conversation.add_tool_message(tool_message=LLMToolMessage.model_validate(tool_message))
         except ValidationError as error:
-            raise AIError("Invalid conversation dump") from error
+            raise InvalidConversationDumpError() from error
 
         return conversation

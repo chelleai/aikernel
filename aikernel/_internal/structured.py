@@ -1,9 +1,10 @@
 from typing import Any
 
 from litellm import acompletion, completion
+from litellm.exceptions import RateLimitError, ServiceUnavailableError
 from pydantic import BaseModel
 
-from aikernel._internal.errors import AIError
+from aikernel._internal.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -33,10 +34,15 @@ def llm_structured_sync[T: BaseModel](
         else:
             rendered_messages.append(message.render())
 
-    response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
+    try:
+        response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
+    except ServiceUnavailableError:
+        raise ModelUnavailableError()
+    except RateLimitError:
+        raise RateLimitExceededError()
 
     if len(response.choices) == 0:
-        raise AIError("No response from LLM")
+        raise NoResponseError()
 
     text = response.choices[0].message.content
     usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
@@ -59,10 +65,15 @@ async def llm_structured[T: BaseModel](
         else:
             rendered_messages.append(message.render())
 
-    response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
+    try:
+        response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
+    except ServiceUnavailableError:
+        raise ModelUnavailableError()
+    except RateLimitError:
+        raise RateLimitExceededError()
 
     if len(response.choices) == 0:
-        raise AIError("No response from LLM")
+        raise NoResponseError()
 
     text = response.choices[0].message.content
     usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
