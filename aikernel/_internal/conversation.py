@@ -72,7 +72,7 @@ class Conversation:
             "tool": [message.model_dump() for message in self._tool_messages],
         }
 
-        return json.dumps(conversation_dump)
+        return json.dumps(conversation_dump, default=str)
 
     @classmethod
     def load(cls, *, dump: str) -> "Conversation":
