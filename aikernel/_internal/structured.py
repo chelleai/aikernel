@@ -4,7 +4,7 @@ from litellm import acompletion, completion
 from litellm.exceptions import RateLimitError, ServiceUnavailableError
 from pydantic import BaseModel
 
-from aikernel._internal.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError
+from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,

@@ -1,6 +1,6 @@
 from litellm import acompletion, completion
 
-from aikernel._internal.errors import NoResponseError
+from aikernel.errors import NoResponseError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
