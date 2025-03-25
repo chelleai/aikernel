@@ -1,7 +1,7 @@
 import json
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, NoReturn, Self
+from typing import Any, Literal, NoReturn, Self
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
@@ -66,7 +66,7 @@ class _LLMMessage(BaseModel):
 class LLMSystemMessage(_LLMMessage):
     @computed_field
     @property
-    def role(self) -> LLMMessageRole:
+    def role(self) -> Literal[LLMMessageRole.SYSTEM]:
         return LLMMessageRole.SYSTEM
 
     def render(self) -> LiteLLMMessage:
@@ -76,7 +76,7 @@ class LLMSystemMessage(_LLMMessage):
 class LLMUserMessage(_LLMMessage):
     @computed_field
     @property
-    def role(self) -> LLMMessageRole:
+    def role(self) -> Literal[LLMMessageRole.USER]:
         return LLMMessageRole.USER
 
     def render(self) -> LiteLLMMessage:
@@ -86,7 +86,7 @@ class LLMUserMessage(_LLMMessage):
 class LLMAssistantMessage(_LLMMessage):
     @computed_field
     @property
-    def role(self) -> LLMMessageRole:
+    def role(self) -> Literal[LLMMessageRole.ASSISTANT]:
         return LLMMessageRole.ASSISTANT
 
     @model_validator(mode="after")
@@ -122,7 +122,7 @@ class LLMToolMessage(_LLMMessage):
 
     @computed_field
     @property
-    def role(self) -> LLMMessageRole:
+    def role(self) -> Literal[LLMMessageRole.TOOL]:
         return LLMMessageRole.TOOL
 
     def render(self) -> NoReturn:
