@@ -1,8 +1,9 @@
+import json
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, NoReturn, Self
 
-from pydantic import BaseModel, Field, Json, computed_field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import (
@@ -101,13 +102,13 @@ class LLMAssistantMessage(_LLMMessage):
 
 class LLMToolMessageFunctionCall(BaseModel):
     name: str
-    arguments: Json[Any]
+    arguments: dict[str, Any]
 
 
 class LLMToolMessage(_LLMMessage):
     tool_call_id: str
     name: str
-    response: Json[Any]
+    response: dict[str, Any]
     function_call: LLMToolMessageFunctionCall
 
     parts: list[LLMMessagePart] = []  # disabling from the base class
@@ -138,7 +139,7 @@ class LLMToolMessage(_LLMMessage):
                     "type": "function",
                     "function": {
                         "name": self.name,
-                        "arguments": self.function_call.arguments,
+                        "arguments": json.dumps(self.function_call.arguments, default=str),
                     },
                 }
             ],
@@ -147,7 +148,7 @@ class LLMToolMessage(_LLMMessage):
             "role": "tool",
             "tool_call_id": self.tool_call_id,
             "name": self.name,
-            "content": self.response,
+            "content": json.dumps(self.response, default=str),
         }
 
         return invocation_message, response_message
