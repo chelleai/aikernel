@@ -21,6 +21,22 @@ class Conversation:
         self._tool_messages: list[LLMToolMessage] = []
         self._system_message: LLMSystemMessage | None = None
 
+    @property
+    def user_messages(self) -> list[LLMUserMessage]:
+        return self._user_messages
+
+    @property
+    def assistant_messages(self) -> list[LLMAssistantMessage]:
+        return self._assistant_messages
+
+    @property
+    def tool_messages(self) -> list[LLMToolMessage]:
+        return self._tool_messages
+
+    @property
+    def system_message(self) -> LLMSystemMessage | None:
+        return self._system_message
+
     def add_user_message(self, *, message: LLMUserMessage) -> None:
         self._user_messages.append(message)
 
