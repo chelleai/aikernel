@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import NoReturn, Self
 
-from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
+from pydantic import BaseModel, Field, Json, computed_field, field_validator, model_validator
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import (
@@ -101,13 +101,13 @@ class LLMAssistantMessage(_LLMMessage):
 
 class LLMToolMessageFunctionCall(BaseModel):
     name: str
-    arguments: str
+    arguments: Json[str]
 
 
 class LLMToolMessage(_LLMMessage):
     tool_call_id: str
     name: str
-    response: str
+    response: Json[str]
     function_call: LLMToolMessageFunctionCall
 
     parts: list[LLMMessagePart] = []  # disabling from the base class
