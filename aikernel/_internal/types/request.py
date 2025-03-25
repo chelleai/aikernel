@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import NoReturn, Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from aikernel._internal.errors import AIError
 from aikernel._internal.types.provider import (
@@ -63,6 +63,7 @@ class _LLMMessage(BaseModel):
 
 
 class LLMSystemMessage(_LLMMessage):
+    @computed_field
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.SYSTEM
@@ -72,6 +73,7 @@ class LLMSystemMessage(_LLMMessage):
 
 
 class LLMUserMessage(_LLMMessage):
+    @computed_field
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.USER
@@ -81,6 +83,7 @@ class LLMUserMessage(_LLMMessage):
 
 
 class LLMAssistantMessage(_LLMMessage):
+    @computed_field
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.ASSISTANT
