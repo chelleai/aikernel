@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import NoReturn, Self
+from typing import Any, NoReturn, Self
 
 from pydantic import BaseModel, Field, Json, computed_field, field_validator, model_validator
 
@@ -101,13 +101,13 @@ class LLMAssistantMessage(_LLMMessage):
 
 class LLMToolMessageFunctionCall(BaseModel):
     name: str
-    arguments: Json[str]
+    arguments: Json[Any]
 
 
 class LLMToolMessage(_LLMMessage):
     tool_call_id: str
     name: str
-    response: Json[str]
+    response: Json[Any]
     function_call: LLMToolMessageFunctionCall
 
     parts: list[LLMMessagePart] = []  # disabling from the base class
