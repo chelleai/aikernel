@@ -66,10 +66,10 @@ class Conversation:
 
     def dump(self) -> str:
         conversation_dump = {
-            "system": self._system_message.model_dump_json() if self._system_message is not None else None,
-            "user": [message.model_dump_json() for message in self._user_messages],
-            "assistant": [message.model_dump_json() for message in self._assistant_messages],
-            "tool": [message.model_dump_json() for message in self._tool_messages],
+            "system": self._system_message.model_dump() if self._system_message is not None else None,
+            "user": [message.model_dump() for message in self._user_messages],
+            "assistant": [message.model_dump() for message in self._assistant_messages],
+            "tool": [message.model_dump() for message in self._tool_messages],
         }
 
         return json.dumps(conversation_dump)
@@ -85,18 +85,16 @@ class Conversation:
 
         try:
             if conversation_dump["system"] is not None:
-                conversation.set_system_message(
-                    message=LLMSystemMessage.model_validate_json(conversation_dump["system"])
-                )
+                conversation.set_system_message(message=LLMSystemMessage.model_validate(conversation_dump["system"]))
 
             for user_message in conversation_dump["user"]:
-                conversation.add_user_message(message=LLMUserMessage.model_validate_json(user_message))
+                conversation.add_user_message(message=LLMUserMessage.model_validate(user_message))
 
             for assistant_message in conversation_dump["assistant"]:
-                conversation.add_assistant_message(message=LLMAssistantMessage.model_validate_json(assistant_message))
+                conversation.add_assistant_message(message=LLMAssistantMessage.model_validate(assistant_message))
 
             for tool_message in conversation_dump["tool"]:
-                conversation.add_tool_message(tool_message=LLMToolMessage.model_validate_json(tool_message))
+                conversation.add_tool_message(tool_message=LLMToolMessage.model_validate(tool_message))
         except ValidationError as error:
             raise AIError("Invalid conversation dump") from error
 
