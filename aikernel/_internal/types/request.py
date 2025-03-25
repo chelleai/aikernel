@@ -120,6 +120,7 @@ class LLMToolMessage(_LLMMessage):
 
         return self
 
+    @computed_field
     @property
     def role(self) -> LLMMessageRole:
         return LLMMessageRole.TOOL
