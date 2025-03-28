@@ -1,6 +1,9 @@
-from typing import Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from litellm import Router
+from pydantic import BaseModel
+
+from aikernel._internal.types.provider import LiteLLMMessage, LiteLLMTool
 
 LLMModelAlias = Literal[
     "gemini-2.0-flash",
@@ -23,6 +26,89 @@ MODEL_ALIAS_MAPPING: dict[LLMModelAlias, LLMModelName] = {
 }
 
 
+class ModelResponseChoiceToolCallFunction(BaseModel):
+    name: str
+    arguments: str
+
+
+class ModelResponseChoiceToolCall(BaseModel):
+    id: str
+    function: ModelResponseChoiceToolCallFunction
+    type: Literal["function"]
+
+
+class ModelResponseChoiceMessage(BaseModel):
+    role: Literal["assistant"]
+    content: str
+    tool_calls: list[ModelResponseChoiceToolCall] | None
+
+
+class ModelResponseChoice(BaseModel):
+    finish_reason: Literal["stop"]
+    index: int
+    message: ModelResponseChoiceMessage
+
+
+class ModelResponseUsage(BaseModel):
+    completion_tokens: int
+    prompt_tokens: int
+    total_tokens: int
+
+
+class ModelResponse(BaseModel):
+    id: str
+    created: int
+    model: str
+    object: Literal["chat.completion"]
+    system_fingerprint: str | None
+    choices: list[ModelResponseChoice]
+    usage: ModelResponseUsage
+
+
+class LiteLLMRouter(Router):
+    def complete(
+        self,
+        *,
+        model: LLMModelAlias,
+        messages: list[LiteLLMMessage],
+        response_format: Any | None = None,
+        tools: list[LiteLLMTool],
+        tool_choice: Literal["auto", "required"] | None = None,
+        max_tokens: int | None = None,
+        temperature: float = 1.0,
+    ) -> ModelResponse:
+        raw_response = super().completion(
+            model=MODEL_ALIAS_MAPPING[model],
+            messages=messages,
+            response_format=response_format,
+            tools=tools,
+            tool_choice=tool_choice,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+        return ModelResponse.model_validate(raw_response)
+
+    async def acomplete(
+        self,
+        *,
+        model: LLMModelAlias,
+        messages: list[LiteLLMMessage],
+        response_format: Any | None = None,
+        tools: list[LiteLLMTool],
+        tool_choice: Literal["auto", "required"] | None = None,
+        temperature: float = 1.0,
+    ) -> ModelResponse:
+        raw_response = await super().acompletion(
+            model=MODEL_ALIAS_MAPPING[model],
+            messages=messages,
+            response_format=response_format,
+            tools=tools,
+            tool_choice=tool_choice,
+            temperature=temperature,
+        )
+        return ModelResponse.model_validate(raw_response)
+
+
 class RouterModelLitellmParams(TypedDict):
     model: str
     api_base: NotRequired[str]
@@ -35,7 +121,7 @@ class RouterModel(TypedDict):
     litellm_params: RouterModelLitellmParams
 
 
-def get_router(*, model_priority_list: list[LLMModelAlias]) -> Router:
+def get_router(*, model_priority_list: list[LLMModelAlias]) -> LiteLLMRouter:
     model_list: list[RouterModel] = [
         {"model_name": model, "litellm_params": {"model": MODEL_ALIAS_MAPPING[model]}} for model in model_priority_list
     ]
@@ -43,4 +129,4 @@ def get_router(*, model_priority_list: list[LLMModelAlias]) -> Router:
         {model: [other_model for other_model in model_priority_list if other_model != model]}
         for model in model_priority_list
     ]
-    return Router(model_list=model_list, fallbacks=fallbacks)
+    return LiteLLMRouter(model_list=model_list, fallbacks=fallbacks)
