@@ -1,6 +1,6 @@
 [project]
 name = "aikernel"
-version = "0.1.34"
+version = "0.1.35"
 description = "A collection of types and interfaces for building type-safe AI tooling. Wraps around litellm."
 readme = "README.md"
 authors = [
