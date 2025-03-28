@@ -20,6 +20,8 @@ class LLMModel(StrEnum):
     GEMINI_2_0_FLASH = "gemini/gemini-2.0-flash"
     GEMINI_2_0_FLASH_LITE = "gemini/gemini-2.0-flash-lite"
     GEMINI_2_0_PRO_EXP_02_05 = "gemini/gemini-2.0-pro-exp-02-05"
+    CLAUDE_3_5_SONNET = "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0"
+    CLAUDE_3_7_SONNET = "bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0"
 
 
 class LLMMessageRole(StrEnum):
