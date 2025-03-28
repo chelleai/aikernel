@@ -77,7 +77,7 @@ class RouterModel[ModelT: LLMModelAlias](TypedDict):
     litellm_params: RouterModelLitellmParams
 
 
-class LiteLLMRouter[ModelT: LLMModelAlias](Router):
+class LLMRouter[ModelT: LLMModelAlias](Router):
     def __init__(self, *, model_list: list[RouterModel[ModelT]], fallbacks: list[dict[ModelT, list[ModelT]]]) -> None:
         super().__init__(model_list=model_list, fallbacks=fallbacks)  # type: ignore
 
@@ -124,7 +124,7 @@ class LiteLLMRouter[ModelT: LLMModelAlias](Router):
         return ModelResponse.model_validate(raw_response)
 
 
-def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> LiteLLMRouter[ModelT]:
+def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> LLMRouter[ModelT]:
     model_list: list[RouterModel[ModelT]] = [
         {"model_name": model, "litellm_params": {"model": MODEL_ALIAS_MAPPING[model]}} for model in model_priority_list
     ]
@@ -132,4 +132,4 @@ def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> L
         {model: [other_model for other_model in model_priority_list if other_model != model]}
         for model in model_priority_list
     ]
-    return LiteLLMRouter(model_list=model_list, fallbacks=fallbacks)
+    return LLMRouter(model_list=model_list, fallbacks=fallbacks)

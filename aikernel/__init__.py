@@ -1,5 +1,5 @@
 from aikernel._internal.conversation import Conversation
-from aikernel._internal.router import LLMModelAlias, Router, get_router
+from aikernel._internal.router import LLMModelAlias, LLMRouter, get_router
 from aikernel._internal.structured import llm_structured, llm_structured_sync
 from aikernel._internal.tools import llm_tool_call, llm_tool_call_sync
 from aikernel._internal.types.provider import (
@@ -53,6 +53,7 @@ __all__ = [
     "LLMUserMessage",
     "LLMAssistantMessage",
     "LLMSystemMessage",
+    "LLMRouter",
     "LLMToolMessage",
     "LLMToolMessageFunctionCall",
     "LLMTool",
@@ -62,5 +63,4 @@ __all__ = [
     "LLMRequiredToolResponse",
     "LLMResponseToolCall",
     "LLMResponseUsage",
-    "Router",
 ]
