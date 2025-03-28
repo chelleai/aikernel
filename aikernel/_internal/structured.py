@@ -4,7 +4,6 @@ from litellm import acompletion, completion
 from litellm.exceptions import RateLimitError, ServiceUnavailableError
 from pydantic import BaseModel
 
-from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -15,6 +14,7 @@ from aikernel._internal.types.request import (
     LLMUserMessage,
 )
 from aikernel._internal.types.response import LLMResponseUsage, LLMStructuredResponse
+from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError
 
 AnyLLMTool = LLMTool[Any]
 

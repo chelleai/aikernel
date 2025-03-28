@@ -1,6 +1,5 @@
 from litellm import acompletion, completion
 
-from aikernel.errors import NoResponseError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -10,6 +9,7 @@ from aikernel._internal.types.request import (
     LLMUserMessage,
 )
 from aikernel._internal.types.response import LLMResponseUsage, LLMUnstructuredResponse
+from aikernel.errors import NoResponseError
 
 
 def llm_unstructured_sync(

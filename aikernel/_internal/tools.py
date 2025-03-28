@@ -4,7 +4,6 @@ from typing import Any, Literal, overload
 from litellm import acompletion, completion
 from litellm.exceptions import RateLimitError, ServiceUnavailableError
 
-from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError, ToolCallError
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -20,6 +19,7 @@ from aikernel._internal.types.response import (
     LLMResponseToolCall,
     LLMResponseUsage,
 )
+from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError, ToolCallError
 
 AnyLLMTool = LLMTool[Any]
 

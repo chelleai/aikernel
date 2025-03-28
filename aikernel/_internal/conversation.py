@@ -4,7 +4,6 @@ from contextlib import contextmanager
 
 from pydantic import ValidationError
 
-from aikernel.errors import InvalidConversationDumpError
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
     LLMMessagePart,
@@ -12,6 +11,7 @@ from aikernel._internal.types.request import (
     LLMToolMessage,
     LLMUserMessage,
 )
+from aikernel.errors import InvalidConversationDumpError
 
 
 class Conversation:
