@@ -48,6 +48,7 @@ class LLMMessagePart(BaseModel):
 
 class _LLMMessage(BaseModel):
     parts: list[LLMMessagePart]
+    cache: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     def render_parts(self) -> list[LiteLLMMediaMessagePart | LiteLLMTextMessagePart]:
@@ -71,7 +72,11 @@ class LLMSystemMessage(_LLMMessage):
         return LLMMessageRole.SYSTEM
 
     def render(self) -> LiteLLMMessage:
-        return {"role": "system", "content": self.render_parts()}
+        message: LiteLLMMessage = {"role": "system", "content": self.render_parts()}
+        if self.cache:
+            message["cache_control"] = {"type": "ephemeral"}
+
+        return message
 
 
 class LLMUserMessage(_LLMMessage):
@@ -81,7 +86,11 @@ class LLMUserMessage(_LLMMessage):
         return LLMMessageRole.USER
 
     def render(self) -> LiteLLMMessage:
-        return {"role": "user", "content": self.render_parts()}
+        message: LiteLLMMessage = {"role": "user", "content": self.render_parts()}
+        if self.cache:
+            message["cache_control"] = {"type": "ephemeral"}
+
+        return message
 
 
 class LLMAssistantMessage(_LLMMessage):
@@ -98,7 +107,11 @@ class LLMAssistantMessage(_LLMMessage):
         return self
 
     def render(self) -> LiteLLMMessage:
-        return {"role": "assistant", "content": self.render_parts()}
+        message: LiteLLMMessage = {"role": "assistant", "content": self.render_parts()}
+        if self.cache:
+            message["cache_control"] = {"type": "ephemeral"}
+
+        return message
 
 
 class LLMToolMessageFunctionCall(BaseModel):
@@ -120,6 +133,13 @@ class LLMToolMessage(_LLMMessage):
             raise ValueError("Tool messages can not have parts")
 
         return self
+
+    @field_validator("cache", mode="after")
+    def cannot_cache_tool_message(cls, value: bool) -> bool:
+        if value:
+            raise ValueError("Tool messages can not be cached")
+
+        return value
 
     @computed_field
     @property
