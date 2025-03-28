@@ -65,11 +65,26 @@ class ModelResponse(BaseModel):
     usage: ModelResponseUsage
 
 
-class LiteLLMRouter(Router):
+class RouterModelLitellmParams(TypedDict):
+    model: str
+    api_base: NotRequired[str]
+    api_key: NotRequired[str]
+    rpm: NotRequired[int]
+
+
+class RouterModel[ModelT: LLMModelAlias](TypedDict):
+    model_name: ModelT
+    litellm_params: RouterModelLitellmParams
+
+
+class LiteLLMRouter[ModelT: LLMModelAlias](Router):
+    def __init__(self, *, model_list: list[RouterModel[ModelT]], fallbacks: list[dict[ModelT, list[ModelT]]]) -> None:
+        super().__init__(model_list=model_list, fallbacks=fallbacks)  # type: ignore
+
     def complete(
         self,
         *,
-        model: LLMModelAlias,
+        model: ModelT,
         messages: list[LiteLLMMessage],
         response_format: Any | None = None,
         tools: list[LiteLLMTool],
@@ -91,7 +106,7 @@ class LiteLLMRouter(Router):
     async def acomplete(
         self,
         *,
-        model: LLMModelAlias,
+        model: ModelT,
         messages: list[LiteLLMMessage],
         response_format: Any | None = None,
         tools: list[LiteLLMTool],
@@ -109,20 +124,8 @@ class LiteLLMRouter(Router):
         return ModelResponse.model_validate(raw_response)
 
 
-class RouterModelLitellmParams(TypedDict):
-    model: str
-    api_base: NotRequired[str]
-    api_key: NotRequired[str]
-    rpm: NotRequired[int]
-
-
-class RouterModel(TypedDict):
-    model_name: str
-    litellm_params: RouterModelLitellmParams
-
-
-def get_router(*, model_priority_list: list[LLMModelAlias]) -> LiteLLMRouter:
-    model_list: list[RouterModel] = [
+def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> LiteLLMRouter[ModelT]:
+    model_list: list[RouterModel[ModelT]] = [
         {"model_name": model, "litellm_params": {"model": MODEL_ALIAS_MAPPING[model]}} for model in model_priority_list
     ]
     fallbacks = [
