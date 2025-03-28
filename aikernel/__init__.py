@@ -1,4 +1,5 @@
 from aikernel._internal.conversation import Conversation
+from aikernel._internal.router import Router, get_router
 from aikernel._internal.structured import llm_structured, llm_structured_sync
 from aikernel._internal.tools import llm_tool_call, llm_tool_call_sync
 from aikernel._internal.types.provider import (
@@ -14,7 +15,6 @@ from aikernel._internal.types.request import (
     LLMMessageContentType,
     LLMMessagePart,
     LLMMessageRole,
-    LLMModel,
     LLMSystemMessage,
     LLMTool,
     LLMToolMessage,
@@ -38,6 +38,7 @@ __all__ = [
     "llm_tool_call",
     "llm_unstructured_sync",
     "llm_unstructured",
+    "get_router",
     "Conversation",
     "LiteLLMCacheControl",
     "LiteLLMMediaMessagePart",
@@ -45,7 +46,6 @@ __all__ = [
     "LiteLLMTextMessagePart",
     "LiteLLMTool",
     "LiteLLMToolFunction",
-    "LLMModel",
     "LLMMessageContentType",
     "LLMMessagePart",
     "LLMMessageRole",
@@ -61,4 +61,5 @@ __all__ = [
     "LLMRequiredToolResponse",
     "LLMResponseToolCall",
     "LLMResponseUsage",
+    "Router",
 ]

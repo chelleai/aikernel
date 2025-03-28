@@ -1,13 +1,13 @@
 import json
 from typing import Any, Literal, overload
 
-from litellm import acompletion, completion
+from litellm import Router
 from litellm.exceptions import RateLimitError, ServiceUnavailableError
 
+from aikernel._internal.router import LLMModelAlias
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
-    LLMModel,
     LLMSystemMessage,
     LLMTool,
     LLMToolMessage,
@@ -28,26 +28,29 @@ AnyLLMTool = LLMTool[Any]
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
+    router: Router,
 ) -> LLMAutoToolResponse: ...
 @overload
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
+    router: Router,
 ) -> LLMRequiredToolResponse: ...
 
 
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "required"],
+    router: Router,
 ) -> LLMAutoToolResponse | LLMRequiredToolResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -60,7 +63,7 @@ def llm_tool_call_sync(
 
     rendered_tools = [tool.render() for tool in tools]
 
-    response = completion(messages=rendered_messages, model=model.value, tools=rendered_tools, tool_choice=tool_choice)
+    response = router.completion(messages=rendered_messages, model=model, tools=rendered_tools, tool_choice=tool_choice)
 
     if len(response.choices) == 0:
         raise NoResponseError()
@@ -92,26 +95,29 @@ def llm_tool_call_sync(
 async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
+    router: Router,
 ) -> LLMAutoToolResponse: ...
 @overload
 async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
+    router: Router,
 ) -> LLMRequiredToolResponse: ...
 
 
 async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "required"] = "auto",
+    router: Router,
 ) -> LLMAutoToolResponse | LLMRequiredToolResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -125,8 +131,8 @@ async def llm_tool_call(
     rendered_tools = [tool.render() for tool in tools]
 
     try:
-        response = await acompletion(
-            messages=rendered_messages, model=model.value, tools=rendered_tools, tool_choice=tool_choice
+        response = await router.acompletion(
+            messages=rendered_messages, model=model, tools=rendered_tools, tool_choice=tool_choice
         )
     except ServiceUnavailableError:
         raise ModelUnavailableError()

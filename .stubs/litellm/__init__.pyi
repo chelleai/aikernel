@@ -1,18 +1,5 @@
 from typing import Any, Literal, NotRequired, TypedDict
 
-_LiteLLMGeminiModel = Literal[
-    "vertex_ai/gemini-2.0-flash",
-    "vertex_ai/gemini-2.0-flash-lite",
-    "vertex_ai/gemini-2.0-pro-exp-02-05",
-    "gemini/gemini-2.0-flash",
-    "gemini/gemini-2.0-flash-lite",
-    "gemini/gemini-2.0-pro-exp-02-05",
-    "bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0",
-    "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
-]
-_LiteLLMEmbeddingModel = Literal[
-    "gemini/text-embedding-004",
-]
 _MessageRole = Literal["system", "user", "assistant", "tool"]
 
 
@@ -101,7 +88,7 @@ class _LiteLLMUsage:
 class ModelResponse:
     id: str
     created: int
-    model: _LiteLLMGeminiModel
+    model: str
     object: Literal["chat.completion"]
     system_fingerprint: str | None
     choices: list[_LiteLLMModelResponseChoice]
@@ -116,13 +103,13 @@ class _LiteLLMEmbeddingData(TypedDict):
 
 class EmbeddingResponse:
     data: list[_LiteLLMEmbeddingData]
-    model: _LiteLLMEmbeddingModel
+    model: str
     usage: _LiteLLMUsage
 
 
 def completion(
     *,
-    model: _LiteLLMGeminiModel,
+    model: str,
     messages: list[_LiteLLMMessage],
     response_format: Any = None,
     tools: list[_LiteLLMTool] | None = None,
@@ -134,7 +121,7 @@ def completion(
 
 async def acompletion(
     *,
-    model: _LiteLLMGeminiModel,
+    model: str,
     messages: list[_LiteLLMMessage],
     response_format: Any = None,
     tools: list[_LiteLLMTool] | None = None,
@@ -143,6 +130,46 @@ async def acompletion(
     temperature: float = 1.0,
 ) -> ModelResponse: ...
 
-def embedding(model: _LiteLLMEmbeddingModel, input: list[str]) -> EmbeddingResponse: ...
+def embedding(model: str, input: list[str]) -> EmbeddingResponse: ...
 
-async def aembedding(model: _LiteLLMEmbeddingModel, input: list[str]) -> EmbeddingResponse: ...
+async def aembedding(model: str, input: list[str]) -> EmbeddingResponse: ...
+
+
+# router
+class _LiteLLMRouterModelParams(TypedDict):
+    model: str
+    api_base: NotRequired[str]
+    api_key: NotRequired[str]
+    rpm: NotRequired[int]
+
+
+class _LiteLLMRouterModel(TypedDict):
+    model_name: str
+    litellm_params: _LiteLLMRouterModelParams
+
+
+class Router:
+    def __init__(self, *, model_list: list[_LiteLLMRouterModel], fallbacks: list[dict[str, list[str]]]) -> None: ...
+
+    async def acompletion(
+        self,
+        *,
+        model: str,
+        messages: list[_LiteLLMMessage],
+        response_format: Any = None,
+        tools: list[_LiteLLMTool] | None = None,
+        tool_choice: Literal["auto", "required"] | None = None,
+        max_tokens: int | None = None,
+        temperature: float = 1.0,
+    ) -> ModelResponse: ...
+    def completion(
+        self,
+        *,
+        model: str,
+        messages: list[_LiteLLMMessage],
+        response_format: Any = None,
+        tools: list[_LiteLLMTool] | None = None,
+        tool_choice: Literal["auto", "required"] | None = None,
+        max_tokens: int | None = None,
+        temperature: float = 1.0,
+    ) -> ModelResponse: ...

@@ -1,13 +1,13 @@
 from typing import Any
 
-from litellm import acompletion, completion
+from litellm import Router
 from litellm.exceptions import RateLimitError, ServiceUnavailableError
 from pydantic import BaseModel
 
+from aikernel._internal.router import LLMModelAlias
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
-    LLMModel,
     LLMSystemMessage,
     LLMTool,
     LLMToolMessage,
@@ -22,8 +22,9 @@ AnyLLMTool = LLMTool[Any]
 def llm_structured_sync[T: BaseModel](
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     response_model: type[T],
+    router: Router,
 ) -> LLMStructuredResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -35,7 +36,7 @@ def llm_structured_sync[T: BaseModel](
             rendered_messages.append(message.render())
 
     try:
-        response = completion(messages=rendered_messages, model=model.value, response_format=response_model)
+        response = router.completion(messages=rendered_messages, model=model, response_format=response_model)
     except ServiceUnavailableError:
         raise ModelUnavailableError()
     except RateLimitError:
@@ -53,8 +54,9 @@ def llm_structured_sync[T: BaseModel](
 async def llm_structured[T: BaseModel](
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModel,
+    model: LLMModelAlias,
     response_model: type[T],
+    router: Router,
 ) -> LLMStructuredResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -66,7 +68,7 @@ async def llm_structured[T: BaseModel](
             rendered_messages.append(message.render())
 
     try:
-        response = await acompletion(messages=rendered_messages, model=model.value, response_format=response_model)
+        response = await router.acompletion(messages=rendered_messages, model=model, response_format=response_model)
     except ServiceUnavailableError:
         raise ModelUnavailableError()
     except RateLimitError:
