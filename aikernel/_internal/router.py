@@ -1,4 +1,6 @@
-from typing import Any, Literal, NotRequired, TypedDict
+import functools
+from collections.abc import Callable
+from typing import Any, Literal, NoReturn, NotRequired, TypedDict, cast
 
 from litellm import Router
 from pydantic import BaseModel
@@ -24,6 +26,14 @@ MODEL_ALIAS_MAPPING: dict[LLMModelAlias, LLMModelName] = {
     "claude-3.5-sonnet": "bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0",
     "claude-3.7-sonnet": "bedrock/anthropic.claude-3-7-sonnet-20250219-v1:0",
 }
+
+
+def disable_method[**P, R](func: Callable[P, R]) -> Callable[P, NoReturn]:
+    @functools.wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> NoReturn:
+        raise NotImplementedError(f"{func.__name__} is not implemented")
+
+    return wrapper
 
 
 class ModelResponseChoiceToolCallFunction(BaseModel):
@@ -81,10 +91,18 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
     def __init__(self, *, model_list: list[RouterModel[ModelT]], fallbacks: list[dict[ModelT, list[ModelT]]]) -> None:
         super().__init__(model_list=model_list, fallbacks=fallbacks)  # type: ignore
 
+    @property
+    def primary_model(self) -> ModelT:
+        model_names = self.model_names
+
+        if len(model_names) == 0:
+            raise ValueError("No models available")
+
+        return cast(ModelT, model_names[0])
+
     def complete(
         self,
         *,
-        model: ModelT,
         messages: list[LiteLLMMessage],
         response_format: Any | None = None,
         tools: list[LiteLLMTool],
@@ -93,7 +111,7 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
         temperature: float = 1.0,
     ) -> ModelResponse:
         raw_response = super().completion(
-            model=MODEL_ALIAS_MAPPING[model],
+            model=MODEL_ALIAS_MAPPING[self.primary_model],
             messages=messages,
             response_format=response_format,
             tools=tools,
@@ -106,7 +124,6 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
     async def acomplete(
         self,
         *,
-        model: ModelT,
         messages: list[LiteLLMMessage],
         response_format: Any | None = None,
         tools: list[LiteLLMTool],
@@ -114,7 +131,7 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
         temperature: float = 1.0,
     ) -> ModelResponse:
         raw_response = await super().acompletion(
-            model=MODEL_ALIAS_MAPPING[model],
+            model=MODEL_ALIAS_MAPPING[self.primary_model],
             messages=messages,
             response_format=response_format,
             tools=tools,
@@ -122,6 +139,12 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
             temperature=temperature,
         )
         return ModelResponse.model_validate(raw_response)
+
+    @disable_method
+    def completion(self, *args: Any, **kwargs: Any) -> NoReturn: ...
+
+    @disable_method
+    def acompletion(self, *args: Any, **kwargs: Any) -> NoReturn: ...
 
 
 def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> LLMRouter[ModelT]:
@@ -133,3 +156,6 @@ def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> L
         for model in model_priority_list
     ]
     return LLMRouter(model_list=model_list, fallbacks=fallbacks)
+
+
+router = get_router(model_priority_list=["gemini-2.0-flash", "claude-3.5-sonnet"])

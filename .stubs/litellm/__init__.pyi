@@ -149,6 +149,8 @@ class _LiteLLMRouterModel(TypedDict):
 
 
 class Router:
+    model_names: list[str]
+
     def __init__(self, *, model_list: list[_LiteLLMRouterModel], fallbacks: list[dict[str, list[str]]]) -> None: ...
 
     async def acompletion(
