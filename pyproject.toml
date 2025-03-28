@@ -10,9 +10,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    # https://github.com/stanfordnlp/dspy/issues/7986
-    "openai==1.61.0",
-    "litellm==1.63.2",
+    "litellm>=1.64.1",
     "pydantic>=2.8.2",
 ]
 
