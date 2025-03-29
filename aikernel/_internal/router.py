@@ -105,7 +105,7 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
         *,
         messages: list[LiteLLMMessage],
         response_format: Any | None = None,
-        tools: list[LiteLLMTool],
+        tools: list[LiteLLMTool] | None = None,
         tool_choice: Literal["auto", "required"] | None = None,
         max_tokens: int | None = None,
         temperature: float = 1.0,
@@ -119,14 +119,14 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
             max_tokens=max_tokens,
             temperature=temperature,
         )
-        return ModelResponse.model_validate(raw_response)
+        return ModelResponse.model_validate(raw_response, from_attributes=True)
 
     async def acomplete(
         self,
         *,
         messages: list[LiteLLMMessage],
         response_format: Any | None = None,
-        tools: list[LiteLLMTool],
+        tools: list[LiteLLMTool] | None = None,
         tool_choice: Literal["auto", "required"] | None = None,
         temperature: float = 1.0,
     ) -> ModelResponse:
@@ -138,7 +138,7 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
             tool_choice=tool_choice,
             temperature=temperature,
         )
-        return ModelResponse.model_validate(raw_response)
+        return ModelResponse.model_validate(raw_response, from_attributes=True)
 
     @disable_method
     def completion(self, *args: Any, **kwargs: Any) -> NoReturn: ...
@@ -147,15 +147,10 @@ class LLMRouter[ModelT: LLMModelAlias](Router):
     def acompletion(self, *args: Any, **kwargs: Any) -> NoReturn: ...
 
 
-def get_router[ModelT: LLMModelAlias](*, model_priority_list: list[ModelT]) -> LLMRouter[ModelT]:
+@functools.cache
+def get_router[ModelT: LLMModelAlias](*, models: tuple[ModelT, ...]) -> LLMRouter[ModelT]:
     model_list: list[RouterModel[ModelT]] = [
-        {"model_name": model, "litellm_params": {"model": MODEL_ALIAS_MAPPING[model]}} for model in model_priority_list
+        {"model_name": model, "litellm_params": {"model": MODEL_ALIAS_MAPPING[model]}} for model in models
     ]
-    fallbacks = [
-        {model: [other_model for other_model in model_priority_list if other_model != model]}
-        for model in model_priority_list
-    ]
+    fallbacks = [{model: [other_model for other_model in models if other_model != model]} for model in models]
     return LLMRouter(model_list=model_list, fallbacks=fallbacks)
-
-
-router = get_router(model_priority_list=["gemini-2.0-flash", "claude-3.5-sonnet"])

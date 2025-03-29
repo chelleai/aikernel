@@ -1,6 +1,6 @@
-from litellm import Router
+from typing import Any
 
-from aikernel._internal.router import LLMModelAlias
+from aikernel._internal.router import LLMRouter
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -15,8 +15,7 @@ from aikernel.errors import NoResponseError
 def llm_unstructured_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
-    router: Router,
+    router: LLMRouter[Any],
 ) -> LLMUnstructuredResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -27,7 +26,7 @@ def llm_unstructured_sync(
         else:
             rendered_messages.append(message.render())
 
-    response = router.completion(messages=rendered_messages, model=model)
+    response = router.complete(messages=rendered_messages)
 
     if len(response.choices) == 0:
         raise NoResponseError()
@@ -41,8 +40,7 @@ def llm_unstructured_sync(
 async def llm_unstructured(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
-    router: Router,
+    router: LLMRouter[Any],
 ) -> LLMUnstructuredResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -53,7 +51,7 @@ async def llm_unstructured(
         else:
             rendered_messages.append(message.render())
 
-    response = await router.acompletion(messages=rendered_messages, model=model)
+    response = await router.acomplete(messages=rendered_messages)
 
     if len(response.choices) == 0:
         raise NoResponseError()

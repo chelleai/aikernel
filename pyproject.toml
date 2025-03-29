@@ -1,6 +1,6 @@
 [project]
 name = "aikernel"
-version = "0.1.42"
+version = "0.1.43"
 description = "A collection of types and interfaces for building type-safe AI tooling. Wraps around litellm."
 readme = "README.md"
 authors = [
@@ -10,6 +10,8 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.37.23",
+    "google-genai>=1.8.0",
     "litellm>=1.64.1",
     "pydantic>=2.8.2",
 ]
