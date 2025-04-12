@@ -17,8 +17,6 @@ from aikernel import (
     get_router,
     llm_structured,
     llm_structured_sync,
-    llm_tool_call,
-    llm_tool_call_sync,
     llm_unstructured,
     llm_unstructured_sync,
 )
