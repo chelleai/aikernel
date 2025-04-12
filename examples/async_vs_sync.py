@@ -59,20 +59,7 @@ async def main():
     )
     messages = [system_message, user_message]
     
-    calc_tool = LLMTool(
-        name="calculator",
-        description="Perform a mathematical calculation",
-        parameters=CalcParams,
-    )
-    
-    tool_user_message = LLMUserMessage(
-        parts=[
-            LLMMessagePart(
-                content="What's 25.7 multiplied by 13.2?"
-            )
-        ]
-    )
-    tool_messages = [system_message, tool_user_message]
+    # Note: Tool-related code removed as it's not used in this simplified example
     
     # Run a synchronous unstructured request
     print("Making synchronous unstructured request...")
