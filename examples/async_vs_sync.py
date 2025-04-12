@@ -41,7 +41,7 @@ async def main():
     start_time = time.time()
     
     # Create a router with the model we want to use
-    router = get_router(models=("claude-3.7-sonnet",))
+    router = get_router(models=("gemini-2.0-flash",))
     
     # Create messages for our requests
     system_message = LLMSystemMessage(
@@ -108,7 +108,7 @@ async def main():
     
     tool_response = llm_tool_call_sync(
         messages=tool_messages,
-        model="claude-3.7-sonnet",
+        model="gemini-2.0-flash",
         tools=[calc_tool],
         tool_choice="required",
         router=router,
@@ -128,7 +128,7 @@ async def main():
         llm_structured(messages=messages, router=router, response_model=Summary),
         llm_tool_call(
             messages=tool_messages,
-            model="claude-3.7-sonnet",
+            model="gemini-2.0-flash",
             tools=[calc_tool],
             tool_choice="required",
             router=router,
