@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 from aikernel import (
     LLMMessagePart,
     LLMSystemMessage,
-    LLMTool,
     LLMUserMessage,
     get_router,
     llm_structured,
