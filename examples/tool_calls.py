@@ -61,13 +61,46 @@ def main():
 
     # Send the messages with the tools, allowing the model to decide if it wants to use a tool
     print("Example 1: Weather query")
-    response1 = llm_tool_call_sync(
-        messages=[system_message, user_message1],
-        model="gemini-2.0-flash",
-        tools=[weather_tool, restaurant_tool],
+    
+    # Render the messages and tools for the router
+    rendered_messages1 = [msg.render() for msg in [system_message, user_message1]]
+    rendered_tools = [weather_tool.render(), restaurant_tool.render()]
+    
+    # Use router.complete directly instead of llm_tool_call_sync
+    raw_response1 = router.complete(
+        messages=rendered_messages1,
+        tools=rendered_tools,
         tool_choice="auto",  # Let the model decide whether to use a tool
-        router=router,
     )
+    
+    # Process the response to check if a tool was called
+    has_tool_call = (
+        hasattr(raw_response1.choices[0].message, "tool_calls") and 
+        raw_response1.choices[0].message.tool_calls
+    )
+    
+    # Create a simplified response object to match the expected format
+    class SimpleResponse:
+        def __init__(self, tool_call=None, text=None):
+            self.tool_call = tool_call
+            self.text = text
+    
+    response1 = SimpleResponse()
+    
+    if has_tool_call:
+        tool_call = raw_response1.choices[0].message.tool_calls[0]
+        # Create a simple tool call object with the expected properties
+        class SimpleToolCall:
+            def __init__(self, tool_name, arguments):
+                self.tool_name = tool_name
+                self.arguments = arguments
+        
+        response1.tool_call = SimpleToolCall(
+            tool_name=tool_call.function.name,
+            arguments=eval(tool_call.function.arguments)  # Convert JSON string to dict
+        )
+    else:
+        response1.text = raw_response1.choices[0].message.content
 
     # Check if the model decided to call a tool
     if response1.tool_call:
@@ -89,13 +122,33 @@ def main():
     )
 
     print("\nExample 2: Restaurant query")
-    response2 = llm_tool_call_sync(
-        messages=[system_message, user_message2],
-        model="gemini-2.0-flash",
-        tools=[weather_tool, restaurant_tool],
+    
+    # Render the messages for the router
+    rendered_messages2 = [msg.render() for msg in [system_message, user_message2]]
+    
+    # Use router.complete directly
+    raw_response2 = router.complete(
+        messages=rendered_messages2,
+        tools=rendered_tools,
         tool_choice="auto",
-        router=router,
     )
+    
+    # Process the response
+    has_tool_call = (
+        hasattr(raw_response2.choices[0].message, "tool_calls") and 
+        raw_response2.choices[0].message.tool_calls
+    )
+    
+    response2 = SimpleResponse()
+    
+    if has_tool_call:
+        tool_call = raw_response2.choices[0].message.tool_calls[0]
+        response2.tool_call = SimpleToolCall(
+            tool_name=tool_call.function.name,
+            arguments=eval(tool_call.function.arguments)
+        )
+    else:
+        response2.text = raw_response2.choices[0].message.content
 
     # Check if the model decided to call a tool
     if response2.tool_call:
@@ -117,12 +170,24 @@ def main():
     )
     
     print("\nExample 3: Requiring a tool call")
-    response3 = llm_tool_call_sync(
-        messages=[system_message, user_message3],
-        model="gemini-2.0-flash",
-        tools=[weather_tool, restaurant_tool],
+    
+    # Render the messages for the router
+    rendered_messages3 = [msg.render() for msg in [system_message, user_message3]]
+    
+    # Use router.complete directly
+    raw_response3 = router.complete(
+        messages=rendered_messages3,
+        tools=rendered_tools,
         tool_choice="required",  # Require the model to call a tool
-        router=router,
+    )
+    
+    # For required tool calls, we know there will be a tool call
+    tool_call = raw_response3.choices[0].message.tool_calls[0]
+    response3 = SimpleResponse(
+        tool_call=SimpleToolCall(
+            tool_name=tool_call.function.name,
+            arguments=eval(tool_call.function.arguments)
+        )
     )
     
     print(f"Tool called: {response3.tool_call.tool_name}")
