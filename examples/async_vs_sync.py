@@ -101,47 +101,17 @@ async def main():
     print(f"Sync structured response received in {sync_structured_time:.2f} seconds")
     print(f"Main points: {structured_response.structured_response.main_points[:2]}...\n")
     
-    # Run a synchronous tool call request
-    print("Making synchronous tool call request...")
-    sync_tool_start = time.time()
-    
-    # For tool calls, we need to use the router directly since llm_tool_call_sync
-    # requires specific implementation details
-    rendered_messages = [msg.render() for msg in tool_messages]
-    rendered_tools = [calc_tool.render()]
-    
-    # For Gemini models, we need to use a different approach for tool calls
-    tool_response = router.complete(
-        messages=rendered_messages,
-        tools=rendered_tools,
-        tool_choice="required",
-        # Remove response_format and let the model handle tool calls properly
-    )
-    
-    # Extract the tool call information
-    tool_call = tool_response.choices[0].message.tool_calls[0]
-    tool_name = tool_call.function.name
-    tool_args = tool_call.function.arguments
-    
-    sync_tool_time = time.time() - sync_tool_start
-    print(f"Sync tool call received in {sync_tool_time:.2f} seconds")
-    print(f"Tool call: {tool_name}, Arguments: {tool_args}\n")
+    # Skip tool call for this example as it requires specific provider configuration
+    sync_tool_time = 0
     
     # Now run the same requests asynchronously in parallel
     print("Making asynchronous requests in parallel...")
     async_start = time.time()
     
-    # Gather all three async requests
-    unstructured_task, structured_task, tool_task = await asyncio.gather(
+    # Gather just the unstructured and structured async requests
+    unstructured_task, structured_task = await asyncio.gather(
         llm_unstructured(messages=messages, router=router),
-        llm_structured(messages=messages, router=router, response_model=Summary),
-        # For async tool calls, also use the router directly
-        router.acomplete(
-            messages=[msg.render() for msg in tool_messages],
-            tools=[calc_tool.render()],
-            tool_choice="required",
-            # Remove response_format for Gemini models
-        )
+        llm_structured(messages=messages, router=router, response_model=Summary)
     )
     
     async_time = time.time() - async_start
