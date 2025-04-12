@@ -1,3 +1,10 @@
+"""Functions for getting structured responses from LLMs.
+
+This module provides functions for getting structured responses from LLMs,
+where the model is asked to generate output conforming to a Pydantic model.
+It provides both synchronous and asynchronous versions of the function.
+"""
+
 from typing import Any
 
 from litellm.exceptions import RateLimitError, ServiceUnavailableError
@@ -24,6 +31,24 @@ def llm_structured_sync[T: BaseModel](
     router: LLMRouter[Any],
     response_model: type[T],
 ) -> LLMStructuredResponse[T]:
+    """Get a structured response from an LLM synchronously.
+    
+    This function sends a conversation to an LLM and asks it to generate
+    a response that conforms to the provided Pydantic model.
+    
+    Args:
+        messages: The conversation messages to send to the LLM
+        router: The LLM router to use for making the request
+        response_model: The Pydantic model that the response should conform to
+        
+    Returns:
+        A structured response containing the raw text and parsed model
+        
+    Raises:
+        ModelUnavailableError: If the model is unavailable
+        RateLimitExceededError: If rate limits have been exceeded
+        NoResponseError: If the model didn't provide a response
+    """
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -55,6 +80,24 @@ async def llm_structured[T: BaseModel](
     router: LLMRouter[Any],
     response_model: type[T],
 ) -> LLMStructuredResponse[T]:
+    """Get a structured response from an LLM asynchronously.
+    
+    This function sends a conversation to an LLM and asks it to generate
+    a response that conforms to the provided Pydantic model.
+    
+    Args:
+        messages: The conversation messages to send to the LLM
+        router: The LLM router to use for making the request
+        response_model: The Pydantic model that the response should conform to
+        
+    Returns:
+        A structured response containing the raw text and parsed model
+        
+    Raises:
+        ModelUnavailableError: If the model is unavailable
+        RateLimitExceededError: If rate limits have been exceeded
+        NoResponseError: If the model didn't provide a response
+    """
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):

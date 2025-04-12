@@ -1,3 +1,10 @@
+"""AI Kernel - A collection of types and functions wrapping LiteLLM for better typing and use cases.
+
+This package provides a set of utilities and functions to interact with large language models
+through the LiteLLM library with improved type safety and better interfaces for different use cases.
+It provides structured interfaces for sending messages, receiving responses, and handling tool calls.
+"""
+
 from aikernel._internal.conversation import Conversation
 from aikernel._internal.router import LLMModelAlias, LLMRouter, get_router
 from aikernel._internal.structured import llm_structured, llm_structured_sync

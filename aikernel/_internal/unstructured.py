@@ -1,3 +1,9 @@
+"""Functions for getting unstructured (text) responses from LLMs.
+
+This module provides functions for getting unstructured (plain text) responses
+from LLMs. It provides both synchronous and asynchronous versions of the function.
+"""
+
 from typing import Any
 
 from aikernel._internal.router import LLMRouter
@@ -17,6 +23,20 @@ def llm_unstructured_sync(
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     router: LLMRouter[Any],
 ) -> LLMUnstructuredResponse:
+    """Get an unstructured (text) response from an LLM synchronously.
+    
+    This function sends a conversation to an LLM and gets a plain text response.
+    
+    Args:
+        messages: The conversation messages to send to the LLM
+        router: The LLM router to use for making the request
+        
+    Returns:
+        An unstructured response containing the text and usage information
+        
+    Raises:
+        NoResponseError: If the model didn't provide a response
+    """
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -42,6 +62,20 @@ async def llm_unstructured(
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
     router: LLMRouter[Any],
 ) -> LLMUnstructuredResponse:
+    """Get an unstructured (text) response from an LLM asynchronously.
+    
+    This function sends a conversation to an LLM and gets a plain text response.
+    
+    Args:
+        messages: The conversation messages to send to the LLM
+        router: The LLM router to use for making the request
+        
+    Returns:
+        An unstructured response containing the text and usage information
+        
+    Raises:
+        NoResponseError: If the model didn't provide a response
+    """
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):

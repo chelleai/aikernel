@@ -1,3 +1,10 @@
+"""Functions for making tool calls with LLMs.
+
+This module provides functions for making tool calls with LLMs, allowing the 
+model to select and call tools based on the conversation context. It provides
+both synchronous and asynchronous versions of the function.
+"""
+
 import json
 from typing import Any, Literal, overload
 
@@ -52,6 +59,28 @@ def llm_tool_call_sync(
     tool_choice: Literal["auto", "required"],
     router: Router,
 ) -> LLMAutoToolResponse | LLMRequiredToolResponse:
+    """Make a synchronous tool call with an LLM.
+    
+    This function sends a conversation to an LLM along with a set of tools,
+    and asks the model to call one of the tools or respond with text.
+    
+    Args:
+        messages: The conversation messages to send to the LLM
+        model: The model to use
+        tools: The tools that the model can call
+        tool_choice: Whether to allow the model to decide to call a tool ('auto')
+                     or require it to call a tool ('required')
+        router: The router to use for making the request
+        
+    Returns:
+        A response containing either a tool call or text (if tool_choice is 'auto'),
+        or just a tool call (if tool_choice is 'required')
+        
+    Raises:
+        NoResponseError: If the model didn't provide a response
+        ToolCallError: If the model was required to call a tool but didn't,
+                       or if the tool call was invalid
+    """
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
@@ -119,6 +148,30 @@ async def llm_tool_call(
     tool_choice: Literal["auto", "required"] = "auto",
     router: Router,
 ) -> LLMAutoToolResponse | LLMRequiredToolResponse:
+    """Make an asynchronous tool call with an LLM.
+    
+    This function sends a conversation to an LLM along with a set of tools,
+    and asks the model to call one of the tools or respond with text.
+    
+    Args:
+        messages: The conversation messages to send to the LLM
+        model: The model to use
+        tools: The tools that the model can call
+        tool_choice: Whether to allow the model to decide to call a tool ('auto')
+                     or require it to call a tool ('required')
+        router: The router to use for making the request
+        
+    Returns:
+        A response containing either a tool call or text (if tool_choice is 'auto'),
+        or just a tool call (if tool_choice is 'required')
+        
+    Raises:
+        ModelUnavailableError: If the model is unavailable
+        RateLimitExceededError: If rate limits have been exceeded
+        NoResponseError: If the model didn't provide a response
+        ToolCallError: If the model was required to call a tool but didn't,
+                       or if the tool call was invalid
+    """
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
         if isinstance(message, LLMToolMessage):
