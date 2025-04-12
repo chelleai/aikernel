@@ -12,7 +12,6 @@ from aikernel import (
     LLMTool,
     LLMUserMessage,
     get_router,
-    llm_tool_call_sync,
 )
 
 
