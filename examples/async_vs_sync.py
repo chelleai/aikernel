@@ -110,11 +110,12 @@ async def main():
     rendered_messages = [msg.render() for msg in tool_messages]
     rendered_tools = [calc_tool.render()]
     
+    # For Gemini models, we need to use a different approach for tool calls
     tool_response = router.complete(
         messages=rendered_messages,
         tools=rendered_tools,
         tool_choice="required",
-        response_format={"type": "json_object"},  # Ensure proper response format
+        # Remove response_format and let the model handle tool calls properly
     )
     
     # Extract the tool call information
@@ -139,7 +140,7 @@ async def main():
             messages=[msg.render() for msg in tool_messages],
             tools=[calc_tool.render()],
             tool_choice="required",
-            response_format={"type": "json_object"},  # Ensure proper response format
+            # Remove response_format for Gemini models
         )
     )
     
@@ -148,11 +149,6 @@ async def main():
     
     print(f"Async unstructured response first 100 chars: {unstructured_task.text[:100]}...")
     print(f"Async structured response main points: {structured_task.structured_response.main_points[:2]}...")
-    # Extract the tool call information from the async response
-    async_tool_call = tool_task.choices[0].message.tool_calls[0]
-    async_tool_name = async_tool_call.function.name
-    async_tool_args = async_tool_call.function.arguments
-    print(f"Async tool call: {async_tool_name}, Arguments: {async_tool_args}")
     
     # Compare total times
     total_sync_time = sync_unstructured_time + sync_structured_time + sync_tool_time
