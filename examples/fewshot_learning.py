@@ -7,11 +7,11 @@ and use them to guide the model's responses.
 from pydantic import BaseModel, Field
 
 from aikernel import (
-    LLMMessagePart, 
-    LLMSystemMessage, 
+    LLMMessagePart,
+    LLMSystemMessage,
     LLMUserMessage,
-    get_router, 
-    llm_structured_sync
+    get_router,
+    llm_structured_sync,
 )
 from aikernel._internal.prompts.fewshot import FewshotExample, FewshotPrompt
 
@@ -109,7 +109,7 @@ def main():
 
     # Access the structured output
     result = response.structured_response
-    print(f"Text: I just finished the exam and I think I did okay, but I'm not sure if I passed all sections.")
+    print("Text: I just finished the exam and I think I did okay, but I'm not sure if I passed all sections.")
     print(f"Sentiment: {result.sentiment}")
     print(f"Confidence: {result.confidence:.2f}")
     print(f"Keywords: {', '.join(result.keywords)}")

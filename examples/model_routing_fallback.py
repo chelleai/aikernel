@@ -5,14 +5,14 @@ and how the router handles fallbacks between models.
 """
 
 import asyncio
+
 from aikernel import (
-    LLMModelAlias,
     LLMMessagePart,
     LLMSystemMessage,
     LLMUserMessage,
     get_router,
-    llm_unstructured_sync,
     llm_unstructured,
+    llm_unstructured_sync,
 )
 
 
