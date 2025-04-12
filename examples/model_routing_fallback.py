@@ -64,14 +64,14 @@ async def main():
     
     # Create a router with multiple models to demonstrate fallback
     # The models are tried in the order provided
-    router1 = get_router(models=("claude-3.7-sonnet", "gemini-2.0-flash"))
+    router1 = get_router(models=("gemini-2.0-flash", "gemini-2.0-flash-lite"))
     print(f"Router 1 primary model: {router1.primary_model}")
     
     # Make a synchronous request with the first router
     perform_sync_request(router1, messages, "claude-3.7-sonnet")
     
     # Create a router with models in a different order
-    router2 = get_router(models=("gemini-2.0-flash", "claude-3.7-sonnet"))
+    router2 = get_router(models=("gemini-2.0-flash-lite", "gemini-2.0-flash"))
     print(f"\nRouter 2 primary model: {router2.primary_model}")
     
     # Make a synchronous request with the second router

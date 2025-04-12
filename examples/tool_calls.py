@@ -30,7 +30,7 @@ class RestaurantParams(BaseModel):
 
 def main():
     # Create a router with the model(s) we want to use
-    router = get_router(models=("claude-3.7-sonnet",))
+    router = get_router(models=("gemini-2.0-flash",))
 
     # Define the tools that the LLM can use
     weather_tool = LLMTool(
@@ -63,7 +63,7 @@ def main():
     print("Example 1: Weather query")
     response1 = llm_tool_call_sync(
         messages=[system_message, user_message1],
-        model="claude-3.7-sonnet",
+        model="gemini-2.0-flash",
         tools=[weather_tool, restaurant_tool],
         tool_choice="auto",  # Let the model decide whether to use a tool
         router=router,
@@ -91,7 +91,7 @@ def main():
     print("\nExample 2: Restaurant query")
     response2 = llm_tool_call_sync(
         messages=[system_message, user_message2],
-        model="claude-3.7-sonnet",
+        model="gemini-2.0-flash",
         tools=[weather_tool, restaurant_tool],
         tool_choice="auto",
         router=router,
@@ -119,7 +119,7 @@ def main():
     print("\nExample 3: Requiring a tool call")
     response3 = llm_tool_call_sync(
         messages=[system_message, user_message3],
-        model="claude-3.7-sonnet",
+        model="gemini-2.0-flash",
         tools=[weather_tool, restaurant_tool],
         tool_choice="required",  # Require the model to call a tool
         router=router,

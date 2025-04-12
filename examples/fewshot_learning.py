@@ -29,7 +29,7 @@ class SentimentOutput(BaseModel):
 
 def main():
     # Create a router with the model(s) we want to use
-    router = get_router(models=("claude-3.7-sonnet",))
+    router = get_router(models=("gemini-2.0-flash",))
 
     # Create system message for the prompt
     system_message = LLMSystemMessage(

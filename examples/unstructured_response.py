@@ -14,7 +14,7 @@ from aikernel import (
 
 def main():
     # Create a router with the model(s) we want to use
-    router = get_router(models=("claude-3.7-sonnet",))
+    router = get_router(models=("gemini-2.0-flash",))
 
     # Create a system message that instructs the model
     system_message = LLMSystemMessage(
