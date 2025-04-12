@@ -114,11 +114,13 @@ async def main():
         messages=rendered_messages,
         tools=rendered_tools,
         tool_choice="required",
+        response_format={"type": "json_object"},  # Ensure proper response format
     )
     
     # Extract the tool call information
-    tool_name = tool_response.choices[0].message.tool_calls[0].function.name
-    tool_args = tool_response.choices[0].message.tool_calls[0].function.arguments
+    tool_call = tool_response.choices[0].message.tool_calls[0]
+    tool_name = tool_call.function.name
+    tool_args = tool_call.function.arguments
     
     sync_tool_time = time.time() - sync_tool_start
     print(f"Sync tool call received in {sync_tool_time:.2f} seconds")
@@ -137,6 +139,7 @@ async def main():
             messages=[msg.render() for msg in tool_messages],
             tools=[calc_tool.render()],
             tool_choice="required",
+            response_format={"type": "json_object"},  # Ensure proper response format
         )
     )
     
@@ -146,8 +149,9 @@ async def main():
     print(f"Async unstructured response first 100 chars: {unstructured_task.text[:100]}...")
     print(f"Async structured response main points: {structured_task.structured_response.main_points[:2]}...")
     # Extract the tool call information from the async response
-    async_tool_name = tool_task.choices[0].message.tool_calls[0].function.name
-    async_tool_args = tool_task.choices[0].message.tool_calls[0].function.arguments
+    async_tool_call = tool_task.choices[0].message.tool_calls[0]
+    async_tool_name = async_tool_call.function.name
+    async_tool_args = async_tool_call.function.arguments
     print(f"Async tool call: {async_tool_name}, Arguments: {async_tool_args}")
     
     # Compare total times
