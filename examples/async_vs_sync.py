@@ -107,17 +107,24 @@ async def main():
     print("Making synchronous tool call request...")
     sync_tool_start = time.time()
     
-    tool_response = llm_tool_call_sync(
-        messages=tool_messages,
-        model="gemini-2.0-flash",
-        tools=[calc_tool],
+    # For tool calls, we need to use the router directly since llm_tool_call_sync
+    # requires specific implementation details
+    rendered_messages = [msg.render() for msg in tool_messages]
+    rendered_tools = [calc_tool.render()]
+    
+    tool_response = router.complete(
+        messages=rendered_messages,
+        tools=rendered_tools,
         tool_choice="required",
-        router=router,
     )
+    
+    # Extract the tool call information
+    tool_name = tool_response.choices[0].message.tool_calls[0].function.name
+    tool_args = tool_response.choices[0].message.tool_calls[0].function.arguments
     
     sync_tool_time = time.time() - sync_tool_start
     print(f"Sync tool call received in {sync_tool_time:.2f} seconds")
-    print(f"Tool call: {tool_response.tool_call.tool_name}, Arguments: {tool_response.tool_call.arguments}\n")
+    print(f"Tool call: {tool_name}, Arguments: {tool_args}\n")
     
     # Now run the same requests asynchronously in parallel
     print("Making asynchronous requests in parallel...")
@@ -127,12 +134,11 @@ async def main():
     unstructured_task, structured_task, tool_task = await asyncio.gather(
         llm_unstructured(messages=messages, router=router),
         llm_structured(messages=messages, router=router, response_model=Summary),
-        llm_tool_call(
-            messages=tool_messages,
-            model="gemini-2.0-flash",
-            tools=[calc_tool],
+        # For async tool calls, also use the router directly
+        router.acomplete(
+            messages=[msg.render() for msg in tool_messages],
+            tools=[calc_tool.render()],
             tool_choice="required",
-            router=router,
         )
     )
     
@@ -141,7 +147,10 @@ async def main():
     
     print(f"Async unstructured response first 100 chars: {unstructured_task.text[:100]}...")
     print(f"Async structured response main points: {structured_task.structured_response.main_points[:2]}...")
-    print(f"Async tool call: {tool_task.tool_call.tool_name}, Arguments: {tool_task.tool_call.arguments}")
+    # Extract the tool call information from the async response
+    async_tool_name = tool_task.choices[0].message.tool_calls[0].function.name
+    async_tool_args = tool_task.choices[0].message.tool_calls[0].function.arguments
+    print(f"Async tool call: {async_tool_name}, Arguments: {async_tool_args}")
     
     # Compare total times
     total_sync_time = sync_unstructured_time + sync_structured_time + sync_tool_time
