@@ -6,6 +6,7 @@ APIs for structured, unstructured, and tool call responses.
 
 import asyncio
 import time
+
 from pydantic import BaseModel, Field
 
 from aikernel import (
@@ -14,12 +15,12 @@ from aikernel import (
     LLMTool,
     LLMUserMessage,
     get_router,
-    llm_structured_sync,
     llm_structured,
-    llm_unstructured_sync,
-    llm_unstructured,
-    llm_tool_call_sync,
+    llm_structured_sync,
     llm_tool_call,
+    llm_tool_call_sync,
+    llm_unstructured,
+    llm_unstructured_sync,
 )
 
 
