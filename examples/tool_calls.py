@@ -72,34 +72,39 @@ def main():
         tool_choice="auto",  # Let the model decide whether to use a tool
     )
     
-    # Process the response to check if a tool was called
-    has_tool_call = (
-        hasattr(raw_response1.choices[0].message, "tool_calls") and 
-        raw_response1.choices[0].message.tool_calls
-    )
-    
-    # Create a simplified response object to match the expected format
+    # Create simplified response classes to handle tool calls
+    class SimpleToolCall:
+        def __init__(self, tool_name, arguments):
+            self.tool_name = tool_name
+            self.arguments = arguments
+            
     class SimpleResponse:
         def __init__(self, tool_call=None, text=None):
             self.tool_call = tool_call
             self.text = text
     
+    # Process the response to check if a tool was called
     response1 = SimpleResponse()
     
-    if has_tool_call:
+    # For Gemini models, tool calls are in a specific format
+    if (hasattr(raw_response1.choices[0].message, "tool_calls") and 
+        raw_response1.choices[0].message.tool_calls):
+        # Extract tool call information
         tool_call = raw_response1.choices[0].message.tool_calls[0]
-        # Create a simple tool call object with the expected properties
-        class SimpleToolCall:
-            def __init__(self, tool_name, arguments):
-                self.tool_name = tool_name
-                self.arguments = arguments
-        
+        import json
+        # Parse the arguments safely using json.loads instead of eval
+        args = json.loads(tool_call.function.arguments)
         response1.tool_call = SimpleToolCall(
             tool_name=tool_call.function.name,
-            arguments=eval(tool_call.function.arguments)  # Convert JSON string to dict
+            arguments=args
         )
-    else:
+    elif hasattr(raw_response1.choices[0].message, "content") and raw_response1.choices[0].message.content:
+        # If no tool call but there's content, use that
         response1.text = raw_response1.choices[0].message.content
+    else:
+        # Fallback for other cases
+        print("Warning: Unexpected response format")
+        response1.text = "Unable to process response"
 
     # Check if the model decided to call a tool
     if response1.tool_call:
@@ -132,22 +137,28 @@ def main():
         tool_choice="auto",
     )
     
-    # Process the response
-    has_tool_call = (
-        hasattr(raw_response2.choices[0].message, "tool_calls") and 
-        raw_response2.choices[0].message.tool_calls
-    )
-    
+    # Process the response for the second example
     response2 = SimpleResponse()
     
-    if has_tool_call:
+    # For Gemini models, tool calls are in a specific format
+    if (hasattr(raw_response2.choices[0].message, "tool_calls") and 
+        raw_response2.choices[0].message.tool_calls):
+        # Extract tool call information
         tool_call = raw_response2.choices[0].message.tool_calls[0]
+        import json
+        # Parse the arguments safely using json.loads instead of eval
+        args = json.loads(tool_call.function.arguments)
         response2.tool_call = SimpleToolCall(
             tool_name=tool_call.function.name,
-            arguments=eval(tool_call.function.arguments)
+            arguments=args
         )
-    else:
+    elif hasattr(raw_response2.choices[0].message, "content") and raw_response2.choices[0].message.content:
+        # If no tool call but there's content, use that
         response2.text = raw_response2.choices[0].message.content
+    else:
+        # Fallback for other cases
+        print("Warning: Unexpected response format")
+        response2.text = "Unable to process response"
 
     # Check if the model decided to call a tool
     if response2.tool_call:
@@ -180,14 +191,28 @@ def main():
         tool_choice="required",  # Require the model to call a tool
     )
     
-    # For required tool calls, we know there will be a tool call
-    tool_call = raw_response3.choices[0].message.tool_calls[0]
-    response3 = SimpleResponse(
-        tool_call=SimpleToolCall(
-            tool_name=tool_call.function.name,
-            arguments=eval(tool_call.function.arguments)
-        )
-    )
+    # Process the response for the third example (required tool call)
+    response3 = SimpleResponse()
+    
+    # Even with required tool calls, we should check the response format
+    if (hasattr(raw_response3.choices[0].message, "tool_calls") and 
+        raw_response3.choices[0].message.tool_calls):
+        # Extract tool call information
+        tool_call = raw_response3.choices[0].message.tool_calls[0]
+        import json
+        # Parse the arguments safely using json.loads instead of eval
+        try:
+            args = json.loads(tool_call.function.arguments)
+            response3.tool_call = SimpleToolCall(
+                tool_name=tool_call.function.name,
+                arguments=args
+            )
+        except json.JSONDecodeError:
+            print("Warning: Could not parse tool arguments as JSON")
+            response3.text = "Error processing tool call arguments"
+    else:
+        print("Warning: Expected tool call not found in response")
+        response3.text = "No tool call found in response"
     
     print(f"Tool called: {response3.tool_call.tool_name}")
     print(f"Arguments: {response3.tool_call.arguments}")
