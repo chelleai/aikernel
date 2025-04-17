@@ -1,10 +1,8 @@
 from typing import Any
 
-from litellm import Router
-from litellm.exceptions import RateLimitError, ServiceUnavailableError
 from pydantic import BaseModel
 
-from aikernel._internal.router import LLMModelAlias
+from aikernel._internal.router import LLMRouter
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -14,7 +12,7 @@ from aikernel._internal.types.request import (
     LLMUserMessage,
 )
 from aikernel._internal.types.response import LLMResponseUsage, LLMStructuredResponse
-from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError
+from aikernel.errors import NoResponseError
 
 AnyLLMTool = LLMTool[Any]
 
@@ -22,9 +20,8 @@ AnyLLMTool = LLMTool[Any]
 def llm_structured_sync[T: BaseModel](
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
+    router: LLMRouter[Any],
     response_model: type[T],
-    router: Router,
 ) -> LLMStructuredResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -35,28 +32,25 @@ def llm_structured_sync[T: BaseModel](
         else:
             rendered_messages.append(message.render())
 
-    try:
-        response = router.completion(messages=rendered_messages, model=model, response_format=response_model)
-    except ServiceUnavailableError:
-        raise ModelUnavailableError()
-    except RateLimitError:
-        raise RateLimitExceededError()
+    response = router.complete(messages=rendered_messages, response_format=response_model, num_retries=2)
 
     if len(response.choices) == 0:
-        raise NoResponseError()
+        raise NoResponseError(model_name=router.primary_model)
 
-    text = response.choices[0].message.content
+    text = response.choices[0].message.content or ""
     usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
-    return LLMStructuredResponse(text=text, structure=response_model, usage=usage)
+    response = LLMStructuredResponse(
+        text=text, structure=response_model, model=router.translate_model_name(model_name=response.model), usage=usage
+    )
+    return response
 
 
 async def llm_structured[T: BaseModel](
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
+    router: LLMRouter[Any],
     response_model: type[T],
-    router: Router,
 ) -> LLMStructuredResponse[T]:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -67,17 +61,15 @@ async def llm_structured[T: BaseModel](
         else:
             rendered_messages.append(message.render())
 
-    try:
-        response = await router.acompletion(messages=rendered_messages, model=model, response_format=response_model)
-    except ServiceUnavailableError:
-        raise ModelUnavailableError()
-    except RateLimitError:
-        raise RateLimitExceededError()
+    response = await router.acomplete(messages=rendered_messages, response_format=response_model, num_retries=2)
 
     if len(response.choices) == 0:
-        raise NoResponseError()
+        raise NoResponseError(model_name=router.primary_model)
 
-    text = response.choices[0].message.content
+    text = response.choices[0].message.content or ""
     usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
-    return LLMStructuredResponse(text=text, structure=response_model, usage=usage)
+    response = LLMStructuredResponse(
+        text=text, structure=response_model, model=router.translate_model_name(model_name=response.model), usage=usage
+    )
+    return response

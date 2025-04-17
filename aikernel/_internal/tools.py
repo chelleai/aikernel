@@ -1,10 +1,7 @@
 import json
 from typing import Any, Literal, overload
 
-from litellm import Router
-from litellm.exceptions import RateLimitError, ServiceUnavailableError
-
-from aikernel._internal.router import LLMModelAlias
+from aikernel._internal.router import LLMModelName, LLMRouter
 from aikernel._internal.types.provider import LiteLLMMessage
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
@@ -19,7 +16,10 @@ from aikernel._internal.types.response import (
     LLMResponseToolCall,
     LLMResponseUsage,
 )
-from aikernel.errors import ModelUnavailableError, NoResponseError, RateLimitExceededError, ToolCallError
+from aikernel.errors import (
+    NoResponseError,
+    ToolCallError,
+)
 
 AnyLLMTool = LLMTool[Any]
 
@@ -28,29 +28,26 @@ AnyLLMTool = LLMTool[Any]
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
-    router: Router,
+    router: LLMRouter[LLMModelName],
 ) -> LLMAutoToolResponse: ...
 @overload
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
-    router: Router,
+    router: LLMRouter[LLMModelName],
 ) -> LLMRequiredToolResponse: ...
 
 
 def llm_tool_call_sync(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
+    router: LLMRouter[LLMModelName],
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "required"],
-    router: Router,
 ) -> LLMAutoToolResponse | LLMRequiredToolResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -63,61 +60,63 @@ def llm_tool_call_sync(
 
     rendered_tools = [tool.render() for tool in tools]
 
-    response = router.completion(messages=rendered_messages, model=model, tools=rendered_tools, tool_choice=tool_choice)
+    response = router.complete(messages=rendered_messages, tools=rendered_tools, tool_choice=tool_choice)
+    used_model = router.translate_model_name(model_name=response.model)
 
     if len(response.choices) == 0:
-        raise NoResponseError()
+        raise NoResponseError(model_name=router.primary_model)
 
     usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
     tool_calls = response.choices[0].message.tool_calls or []
     if len(tool_calls) == 0:
         if tool_choice == "required":
-            raise ToolCallError()
+            raise ToolCallError(model_name=router.primary_model)
         else:
-            return LLMAutoToolResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
+            return LLMAutoToolResponse(
+                tool_call=None, text=response.choices[0].message.content, model=used_model, usage=usage
+            )
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
     except (StopIteration, IndexError) as error:
-        raise ToolCallError() from error
+        raise ToolCallError(model_name=router.primary_model) from error
 
     try:
         arguments = json.loads(tool_calls[0].function.arguments)
     except json.JSONDecodeError as error:
-        raise ToolCallError() from error
+        raise ToolCallError(model_name=router.primary_model) from error
 
     tool_call = LLMResponseToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
-    return LLMAutoToolResponse(tool_call=tool_call, usage=usage)
+    response = LLMAutoToolResponse(tool_call=tool_call, model=used_model, usage=usage)
+
+    return response
 
 
 @overload
 async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
+    router: LLMRouter[LLMModelName],
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto"],
-    router: Router,
 ) -> LLMAutoToolResponse: ...
 @overload
 async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
+    router: LLMRouter[LLMModelName],
     tools: list[AnyLLMTool],
     tool_choice: Literal["required"],
-    router: Router,
 ) -> LLMRequiredToolResponse: ...
 
 
 async def llm_tool_call(
     *,
     messages: list[LLMUserMessage | LLMAssistantMessage | LLMSystemMessage | LLMToolMessage],
-    model: LLMModelAlias,
+    router: LLMRouter[LLMModelName],
     tools: list[AnyLLMTool],
     tool_choice: Literal["auto", "required"] = "auto",
-    router: Router,
 ) -> LLMAutoToolResponse | LLMRequiredToolResponse:
     rendered_messages: list[LiteLLMMessage] = []
     for message in messages:
@@ -130,36 +129,38 @@ async def llm_tool_call(
 
     rendered_tools = [tool.render() for tool in tools]
 
-    try:
-        response = await router.acompletion(
-            messages=rendered_messages, model=model, tools=rendered_tools, tool_choice=tool_choice
-        )
-    except ServiceUnavailableError:
-        raise ModelUnavailableError()
-    except RateLimitError:
-        raise RateLimitExceededError()
+    response = await router.acomplete(messages=rendered_messages, tools=rendered_tools, tool_choice=tool_choice)
 
     if len(response.choices) == 0:
-        raise NoResponseError()
+        raise NoResponseError(model_name=router.primary_model)
 
+    used_model = router.translate_model_name(model_name=response.model)
     usage = LLMResponseUsage(input_tokens=response.usage.prompt_tokens, output_tokens=response.usage.completion_tokens)
 
     tool_calls = response.choices[0].message.tool_calls or []
     if len(tool_calls) == 0:
         if tool_choice == "required":
-            raise ToolCallError()
+            raise ToolCallError(model_name=used_model)
         else:
-            return LLMAutoToolResponse(tool_call=None, text=response.choices[0].message.content, usage=usage)
+            return LLMAutoToolResponse(
+                tool_call=None, text=response.choices[0].message.content, model=used_model, usage=usage
+            )
 
     try:
         chosen_tool = next(tool for tool in tools if tool.name == tool_calls[0].function.name)
     except (StopIteration, IndexError) as error:
-        raise ToolCallError() from error
+        raise ToolCallError(model_name=used_model) from error
 
     try:
         arguments = json.loads(tool_calls[0].function.arguments)
     except json.JSONDecodeError as error:
-        raise ToolCallError() from error
+        raise ToolCallError(model_name=used_model) from error
 
     tool_call = LLMResponseToolCall(id=tool_calls[0].id, tool_name=chosen_tool.name, arguments=arguments)
-    return LLMRequiredToolResponse(tool_call=tool_call, usage=usage)
+
+    if tool_choice == "required":
+        response = LLMRequiredToolResponse(tool_call=tool_call, model=used_model, usage=usage)
+    else:
+        response = LLMAutoToolResponse(tool_call=tool_call, model=used_model, usage=usage)
+
+    return response

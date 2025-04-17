@@ -2,8 +2,6 @@ import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from pydantic import ValidationError
-
 from aikernel._internal.types.request import (
     LLMAssistantMessage,
     LLMMessagePart,
@@ -11,7 +9,6 @@ from aikernel._internal.types.request import (
     LLMToolMessage,
     LLMUserMessage,
 )
-from aikernel.errors import InvalidConversationDumpError
 
 
 class Conversation:
@@ -92,26 +89,19 @@ class Conversation:
 
     @classmethod
     def load(cls, *, dump: str) -> "Conversation":
-        try:
-            conversation_dump = json.loads(dump)
-        except json.JSONDecodeError as error:
-            raise InvalidConversationDumpError() from error
-
+        conversation_dump = json.loads(dump)
         conversation = cls()
 
-        try:
-            if conversation_dump["system"] is not None:
-                conversation.set_system_message(message=LLMSystemMessage.model_validate(conversation_dump["system"]))
+        if conversation_dump["system"] is not None:
+            conversation.set_system_message(message=LLMSystemMessage.model_validate(conversation_dump["system"]))
 
-            for user_message in conversation_dump["user"]:
-                conversation.add_user_message(message=LLMUserMessage.model_validate(user_message))
+        for user_message in conversation_dump["user"]:
+            conversation.add_user_message(message=LLMUserMessage.model_validate(user_message))
 
-            for assistant_message in conversation_dump["assistant"]:
-                conversation.add_assistant_message(message=LLMAssistantMessage.model_validate(assistant_message))
+        for assistant_message in conversation_dump["assistant"]:
+            conversation.add_assistant_message(message=LLMAssistantMessage.model_validate(assistant_message))
 
-            for tool_message in conversation_dump["tool"]:
-                conversation.add_tool_message(tool_message=LLMToolMessage.model_validate(tool_message))
-        except ValidationError as error:
-            raise InvalidConversationDumpError() from error
+        for tool_message in conversation_dump["tool"]:
+            conversation.add_tool_message(tool_message=LLMToolMessage.model_validate(tool_message))
 
         return conversation

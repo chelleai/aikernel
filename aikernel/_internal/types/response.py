@@ -1,6 +1,9 @@
 from typing import Any, Self
 
-from pydantic import BaseModel, computed_field, model_validator
+from pydantic import BaseModel, ValidationError, computed_field, model_validator
+
+from aikernel._internal.router import LLMModelName
+from aikernel.errors import SchemaNotFollowedError
 
 
 class LLMResponseToolCall(BaseModel):
@@ -16,23 +19,29 @@ class LLMResponseUsage(BaseModel):
 
 class LLMUnstructuredResponse(BaseModel):
     text: str
+    model: LLMModelName
     usage: LLMResponseUsage
 
 
 class LLMStructuredResponse[T: BaseModel](BaseModel):
     text: str
     structure: type[T]
+    model: LLMModelName
     usage: LLMResponseUsage
 
     @computed_field
     @property
     def structured_response(self) -> T:
-        return self.structure.model_validate_json(self.text)
+        try:
+            return self.structure.model_validate_json(self.text)
+        except ValidationError as error:
+            raise SchemaNotFollowedError(raw_response_text=self.text, errors=error.errors())
 
 
 class LLMAutoToolResponse(BaseModel):
     tool_call: LLMResponseToolCall | None = None
     text: str | None = None
+    model: LLMModelName
     usage: LLMResponseUsage
 
     @model_validator(mode="after")
@@ -45,4 +54,5 @@ class LLMAutoToolResponse(BaseModel):
 
 class LLMRequiredToolResponse(BaseModel):
     tool_call: LLMResponseToolCall
+    model: LLMModelName
     usage: LLMResponseUsage

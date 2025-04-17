@@ -1,5 +1,7 @@
 from typing import Any, Literal, NotRequired, TypedDict
 
+modify_params: bool
+
 _MessageRole = Literal["system", "user", "assistant", "tool"]
 
 
@@ -116,6 +118,7 @@ def completion(
     tool_choice: Literal["auto", "required"] | None = None,
     max_tokens: int | None = None,
     temperature: float = 1.0,
+    num_retries: int = 0,
 ) -> ModelResponse: ...
 
 
@@ -128,6 +131,7 @@ async def acompletion(
     tool_choice: Literal["auto", "required"] | None = None,
     max_tokens: int | None = None,
     temperature: float = 1.0,
+    num_retries: int = 0,
 ) -> ModelResponse: ...
 
 def embedding(model: str, input: list[str]) -> EmbeddingResponse: ...
@@ -163,7 +167,9 @@ class Router:
         tool_choice: Literal["auto", "required"] | None = None,
         max_tokens: int | None = None,
         temperature: float = 1.0,
+        num_retries: int = 0,
     ) -> ModelResponse: ...
+
     def completion(
         self,
         *,
@@ -174,4 +180,5 @@ class Router:
         tool_choice: Literal["auto", "required"] | None = None,
         max_tokens: int | None = None,
         temperature: float = 1.0,
+        num_retries: int = 0,
     ) -> ModelResponse: ...
